@@ -4,17 +4,29 @@
 #include <stdint.h>
 #include "mat.h"
 
-typedef struct _rt_color {
+// universe resolution = matter voxels / meter
+#define UNI_RES 10000
+
+typedef struct _uni_color {
     uint8_t r;
     uint8_t g;
     uint8_t b;
-} rt_color;
+} uni_color;
 
 
-typedef struct _rt_vox {
+uni_color uni_color_blend(const uni_color* a, const uni_color* b) {
+    return (uni_color){
+        .r = (uint8_t)fmin((float)a->r * (float)b->r, 255),
+        .g = (uint8_t)fmin((float)a->g * (float)b->g, 255),
+        .b = (uint8_t)fmin((float)a->b * (float)b->b, 255),
+    };
+}
+
+
+typedef struct _uni_vox {
     mat_vec3 pos;
-    rt_color c;
+    uni_color c;
     // physical parameters
-} rt_vox;
+} uni_vox;
 
 #endif
