@@ -4,7 +4,6 @@
 #include <stdint.h>
 #include "mat.h"
 
-
 typedef struct _rt_color {
     uint8_t r;
     uint8_t g;

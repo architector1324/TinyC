@@ -5,7 +5,6 @@
 #include "mat.h"
 #include "uni.h"
 
-
 // raytracing
 typedef struct _rt_ray {
     mat_vec3 dir; // should be normalized!
