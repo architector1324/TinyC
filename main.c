@@ -9,43 +9,29 @@
 
 int main() {
     // scene
-    uni_vox uni[1] = {
-        (uni_vox){
-            .pos = (mat_vec3){0, 5, 0},
-            .c = (uni_color){255, 0, 0}
-        }
+    uni_vox vox = (uni_vox){
+        .pos = (mat_vec3){0, 5, 0},
+        .c = (uni_color){255, 0, 0}
     };
 
     rt_ray ray = rt_ray_new(
-        (mat_vec3){0, 1, 0},
+        (mat_vec3f){0.0f, 1.0f, 0.0f},
         (mat_vec3){0, 0, 0},
         (uni_color){255, 255, 255},
         1.0f
     );
 
     // render
-    while(true) {
-        if(rt_ray_collide(&ray, uni, 1)) printf("COLLIDE\n");
-        rt_ray_forward(&ray);
+    while(rt_ray_trace(&ray, &vox));
+    if(rt_ray_collide(&ray, &(mat_vec3){0, 0, 0}))
         printf(
-            "RAY: {pos:{%ld %ld %ld} color:{%d %d %d} power:%f}\n",
-            ray.pos.x, ray.pos.y, ray.pos.z,
-            ray.c.r, ray.c.g, ray.c.b,
-            ray.power
+            "RAYTRACED: %d %d %d\n",
+            (uint8_t)(ray.c.r * ray.power),
+            (uint8_t)(ray.c.g * ray.power),
+            (uint8_t)(ray.c.b * ray.power)
         );
 
-        if(mat_vec3_eq(&ray.pos, &(mat_vec3){0, 0, 0})){
-            printf(
-                "RAYTRACED: %d %d %d\n",
-                (uint8_t)(ray.c.r * ray.power),
-                (uint8_t)(ray.c.g * ray.power),
-                (uint8_t)(ray.c.b * ray.power)
-            );
-            break;
-        };
-    }
-
-    // // render
+    // render
     // const size_t w = 640;
     // const size_t h = 480;
 
