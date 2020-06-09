@@ -1,7 +1,2 @@
-# UniC
-
-To get ppm(portable pixmap)/png image:
-```sh
-$ gcc -O2 main.c -lpng -lm
-$ ./a.out
-```
+# TinyC
+Tiny collection of my C11 one-header libraries.
