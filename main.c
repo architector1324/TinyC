@@ -9,8 +9,12 @@
 
 
 int main() {
+    mat_stress(500);
     mat_stress(1000);
-    mat_stress_multi(1000);
+    mat_stress(1500);
+    mat_stress(2000);
+    // mat_stress_multi(1000);
+
     // scene
 
     // render (one fullhd frame = 2073600 rays)

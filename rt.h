@@ -15,6 +15,7 @@ typedef struct _rt_ray {
 } rt_ray;
 
 rt_ray rt_ray_new(mat_vec3f dir, mat_vec3 pos, uni_color c, float power) {
+    // 7.2 mul
     return (rt_ray) {
         .dir = mat_vec3f_norm(&dir),
         .pos = pos,
@@ -26,6 +27,7 @@ rt_ray rt_ray_new(mat_vec3f dir, mat_vec3 pos, uni_color c, float power) {
 bool rt_ray_collide(const rt_ray* ray, const mat_vec3* p) {
     mat_vec3 delta = mat_vec3_sub(&ray->pos, p);
 
+    // 3.6 mul + 1 mul + 3.6 mul + 3 mul + 3 mul = 14.2 mul
     float a = mat_vec3f_mul(&ray->dir, &ray->dir);
     float b = 2.0 * mat_vec3_mulf(&delta, &ray->dir);
     float c = mat_vec3_mul(&delta, &delta) - 1;
@@ -37,6 +39,7 @@ bool rt_ray_collide(const rt_ray* ray, const mat_vec3* p) {
 
 bool rt_ray_trace(rt_ray* ray, const uni_vox* vox) {
     if(rt_ray_collide(ray, &vox->pos)) {
+        // 14.2 mul + 3.6 mul = 17.8 mul
         ray->pos = vox->pos;
         ray->dir = mat_vec3f_inv(&ray->dir);
         ray->c = uni_color_blend(&ray->c, &vox->c);
