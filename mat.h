@@ -206,52 +206,107 @@ void mat_fast_vec3f_vmul(const mat_vec3f* a, const mat_vec3f* b, mat_vec3f* res)
 
 #include <time.h>
 #include <stdio.h>
+#include <omp.h>
 
-    void mat_stress(size_t million) {
-        const size_t count = 1000000 * million;
+void mat_stress(size_t million) {
+    const size_t count = 1000000 * million;
 
-        mat_vec3 a = {2, 3, 4};
-        mat_vec3 b = {5, 7, 8};
- 
-        // immutable int
-        float start = (float)clock()/CLOCKS_PER_SEC;
-        for(size_t i = 0; i < count; i++) {
-            mat_vec3 c = mat_vec3_vmul(&a, &b);
-        }
-        float end = (float)clock()/CLOCKS_PER_SEC;
-        printf("immutalbe int mul time: %f\n", end - start);
+    printf("vec3 mul: %ld, single thread\n------------------------------------\n", count);
 
-        // mutalbe int
-        mat_vec3 c;
+    mat_vec3 a = {2, 3, 4};
+    mat_vec3 b = {5, 7, 8};
 
-        start = (float)clock()/CLOCKS_PER_SEC;
-        for(size_t i = 0; i < count; i++) {
-            mat_fast_vec3_vmul(&a, &b, &c);
-        }
-        end = (float)clock()/CLOCKS_PER_SEC;
-        printf("mutable int mul time: %f\n", end - start);
-
-        // immutable float
-        mat_vec3f d = {2.0, 3.0, 4.0};
-        mat_vec3f e = {5.0, 7.0, 8.0};
-
-        start = (float)clock()/CLOCKS_PER_SEC;
-        for(size_t i = 0; i < count; i++) {
-            mat_vec3f c = mat_vec3f_vmul(&d, &e);
-        }
-        end = (float)clock()/CLOCKS_PER_SEC;
-        printf("immutalbe float mul time: %f\n", end - start);
-
-        // mutable float
-        mat_vec3f f;
-
-        start = (float)clock()/CLOCKS_PER_SEC;
-        for(size_t i = 0; i < count; i++) {
-            mat_fast_vec3f_vmul(&d, &e, &f);
-        }
-        end = (float)clock()/CLOCKS_PER_SEC;
-        printf("mutable float mul time: %f\n", end - start);
+    // immutable int
+    float start = omp_get_wtime();
+    for(size_t i = 0; i < count; i++) {
+        mat_vec3 c = mat_vec3_vmul(&a, &b);
     }
+    float end = omp_get_wtime();
+    printf("immut int: %fs.\n", end - start);
+
+    // mutalbe int
+    mat_vec3 c;
+
+    start = omp_get_wtime();
+    for(size_t i = 0; i < count; i++) {
+        mat_fast_vec3_vmul(&a, &b, &c);
+    }
+    end = omp_get_wtime();
+    printf("mut int: %fs.\n", end - start);
+
+    // immutable float
+    mat_vec3f d = {2.0, 3.0, 4.0};
+    mat_vec3f e = {5.0, 7.0, 8.0};
+
+    start = omp_get_wtime();
+    for(size_t i = 0; i < count; i++) {
+        mat_vec3f c = mat_vec3f_vmul(&d, &e);
+    }
+    end = omp_get_wtime();
+    printf("immut float: %fs\n", end - start);
+
+    // mutable float
+    mat_vec3f f;
+
+    start = omp_get_wtime();
+    for(size_t i = 0; i < count; i++) {
+        mat_fast_vec3f_vmul(&d, &e, &f);
+    }
+    end = omp_get_wtime();
+    printf("mut float: %fs\n------------------------------------\n", end - start);
+}
+
+void mat_stress_multi(size_t million) {
+    const size_t count = 1000000 * million;
+
+    printf("vec3 mul: %ld, %d threads\n------------------------------------\n", count, omp_get_max_threads());
+
+    mat_vec3 a = {2, 3, 4};
+    mat_vec3 b = {5, 7, 8};
+
+    // immutable int
+    float start = omp_get_wtime();
+    #pragma omp parallel for
+    for(size_t i = 0; i < count; i++) {
+        mat_vec3 c = mat_vec3_vmul(&a, &b);
+    }
+    float end = omp_get_wtime();
+    printf("immut int: %fs\n", end - start);
+
+    // mutalbe int
+    mat_vec3 c;
+
+    start = omp_get_wtime();
+    #pragma omp parallel for private(c)
+    for(size_t i = 0; i < count; i++) {
+        mat_fast_vec3_vmul(&a, &b, &c);
+    }
+    end = omp_get_wtime();
+    printf("mut int: %fs\n", end - start);
+
+    // immutable float
+    mat_vec3f d = {2.0, 3.0, 4.0};
+    mat_vec3f e = {5.0, 7.0, 8.0};
+
+    start = omp_get_wtime();
+    #pragma omp parallel for
+    for(size_t i = 0; i < count; i++) {
+        mat_vec3f c = mat_vec3f_vmul(&d, &e);
+    }
+    end = omp_get_wtime();
+    printf("immut float: %fs\n", end - start);
+
+    // mutable float
+    mat_vec3f f;
+
+    start = omp_get_wtime();
+    #pragma omp parallel for private(c)
+    for(size_t i = 0; i < count; i++) {
+        mat_fast_vec3f_vmul(&d, &e, &f);
+    }
+    end = omp_get_wtime();
+    printf("mut float: %fs\n------------------------------------\n", end - start);
+}
 
 #endif
 

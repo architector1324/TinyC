@@ -10,12 +10,12 @@
 
 int main() {
     mat_stress(1000);
-
+    mat_stress_multi(1000);
     // scene
 
-    // render
-    const size_t w = 800;
-    const size_t h = 600;
+    // render (one fullhd frame = 2073600 rays)
+    const size_t w = 1920;
+    const size_t h = 1080;
 
     uint8_t data[w * h * 4];
     for(size_t y = 0; y < h; y++) {
