@@ -8,18 +8,21 @@
 
 int main() {
     vec(float) a = vec_init(float)();
+    vec_reserve(a, 6);
 
-    printf("PUSH:\n");
-    for(size_t i = 0; i < 100; i++) {
+    for(size_t i = 0; i < 6; i++) {
         printf("size=%ld cap=%ld\n", a.size, a.cap);
         vec_push(a, 3.14f);
     }
 
-    printf("POP:\n");
-    for(size_t i = 0; i < 100; i++) {
-        vec_pop(a);
-        printf("size=%ld cap=%ld\n", a.size, a.cap);
-    }
+    vec_reserve(a, 8);
+    printf("size=%ld cap=%ld\n", a.size, a.cap);
+
+    vec_reserve(a, 7);
+    printf("size=%ld cap=%ld\n", a.size, a.cap);
+
+    vec_reserve(a, 3);
+    printf("size=%ld cap=%ld\n", a.size, a.cap);
 
     vec_free(a);
 

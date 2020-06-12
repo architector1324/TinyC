@@ -17,6 +17,7 @@
 
 #define vec_push(v, e) v.push(&v, e)
 #define vec_pop(v) v.pop(&v)
+#define vec_reserve(v, count) v.reserve(&v, count)
 #define vec_free(v) v.free(&v)
 
 #define VECTOR(type)\
@@ -26,6 +27,7 @@ typedef struct _cat(_, vec(type)) {\
     size_t cap;\
     void (*push)(struct _cat(_, vec(type))*, type);\
     type (*pop)(struct _cat(_, vec(type))*);\
+    void (*reserve)(struct _cat(_, vec(type))*, size_t);\
     void (*free)(struct _cat(_, vec(type))*);\
 } vec(type);\
 void _cat(vec(type), _push)(vec(type)* v, type e) {\
@@ -46,6 +48,13 @@ type _cat(vec(type), _pop)(vec(type)* v) {\
     }\
     return v->data[--v->size];\
 }\
+void _cat(vec(type), _reserve)(vec(type)* v, size_t count) {\
+    if(count < v->size) v->cap = v->size;\
+    else if(count != v->cap) {\
+        v->cap = count;\
+        v->data = (type*)realloc(v->data, v->cap * sizeof(type));\
+    }\
+}\
 void _cat(vec(type), _free)(vec(type)* v) {\
     v->size = 0;\
     v->cap = 0;\
@@ -53,6 +62,7 @@ void _cat(vec(type), _free)(vec(type)* v) {\
     v->data = NULL;\
     v->push = NULL;\
     v->pop = NULL;\
+    v->reserve = NULL;\
     v->free = NULL;\
 }\
 vec(type) _cat(vec(type), _init)() {\
@@ -62,6 +72,7 @@ vec(type) _cat(vec(type), _init)() {\
         .cap = 2,\
         .push = _cat(vec(type), _push),\
         .pop = _cat(vec(type), _pop),\
+        .reserve = _cat(vec(type), _reserve),\
         .free = _cat(vec(type), _free)\
     };\
 }
