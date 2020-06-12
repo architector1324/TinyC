@@ -8,11 +8,11 @@
 // #include "vec.h"
 #include "thrd.h"
 
-THREAD(void*, foo, float a) {
+THREAD(void*, foo, size_t th, float a) {
     for(size_t i = 0; i < 3; i++) {
         srand(time(NULL));
 
-        printf("%f\n", arg->a);
+        printf("thrd%ld: %f\n", arg->th, arg->a);
         sleep(rand() % 2);
     }
 }
@@ -21,8 +21,8 @@ int main() {
     thrd(foo) th0;
     thrd(foo) th1;
 
-    thrd_create(foo, th0, 3.14f);
-    thrd_create(foo, th1, 2.71f);
+    thrd_create(foo, th0, 0, 3.14f);
+    thrd_create(foo, th1, 1, 2.71f);
     
     thrd_join(th0);
     thrd_join(th1);
