@@ -56,6 +56,42 @@ void _cat(thrd(name), _create)(thrd(name)* th, thrd_args(name) arg){\
 }\
 type name(const thrd_args(name)* arg)
 
+// sync
+#define thrd_mtx(type) _cat(_thrd_mtx_, type)
+#define thrd_mtx_init(type) _cat(thrd_mtx(type), _init)
+
+#define thrd_mtx_lock(m) m.lock(&m)
+#define thrd_mtx_unlock(m) m.unlock(&m)
+#define thrd_mtx_free(m) m.free(&m)
+
+#define MUTEX(type)\
+typedef struct _cat(__thrd_mtx_, type) {\
+    pthread_mutex_t mut;\
+    type val;\
+    type* (*lock)(struct _cat(__thrd_mtx_, type)*);\
+    void (*unlock)(struct _cat(__thrd_mtx_, type)*);\
+    void (*free)(struct _cat(__thrd_mtx_, type)*);\
+} thrd_mtx(type);\
+type* _cat(thrd_mtx(type), _lock)(thrd_mtx(type)* mut) {\
+    pthread_mutex_lock(&mut->mut);\
+    return &mut->val;\
+}\
+void _cat(thrd_mtx(type), _unlock)(thrd_mtx(type)* mut) {\
+    pthread_mutex_unlock(&mut->mut);\
+}\
+void _cat(thrd_mtx(type), _free)(thrd_mtx(type)* mut) {\
+    pthread_mutex_destroy(&mut->mut);\
+}\
+thrd_mtx(type) _cat(thrd_mtx(type), _init)(type val) {\
+    thrd_mtx(type) mut = {\
+        .val = val,\
+        .lock = _cat(thrd_mtx(type), _lock),\
+        .unlock = _cat(thrd_mtx(type), _unlock),\
+        .free = _cat(thrd_mtx(type), _free)\
+    };\
+    pthread_mutex_init(&mut.mut, NULL);\
+    return mut;\
+}
 
 // chan
 
