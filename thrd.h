@@ -66,31 +66,75 @@ type name(const thrd_args(name)* arg)
 
 #define MUTEX(type)\
 typedef struct _cat(__thrd_mtx_, type) {\
-    pthread_mutex_t mut;\
+    pthread_mutex_t mtx;\
     type val;\
     type* (*lock)(struct _cat(__thrd_mtx_, type)*);\
     void (*unlock)(struct _cat(__thrd_mtx_, type)*);\
     void (*free)(struct _cat(__thrd_mtx_, type)*);\
 } thrd_mtx(type);\
-type* _cat(thrd_mtx(type), _lock)(thrd_mtx(type)* mut) {\
-    pthread_mutex_lock(&mut->mut);\
-    return &mut->val;\
+type* _cat(thrd_mtx(type), _lock)(thrd_mtx(type)* mtx) {\
+    pthread_mutex_lock(&mtx->mtx);\
+    return &mtx->val;\
 }\
-void _cat(thrd_mtx(type), _unlock)(thrd_mtx(type)* mut) {\
-    pthread_mutex_unlock(&mut->mut);\
+void _cat(thrd_mtx(type), _unlock)(thrd_mtx(type)* mtx) {\
+    pthread_mutex_unlock(&mtx->mtx);\
 }\
-void _cat(thrd_mtx(type), _free)(thrd_mtx(type)* mut) {\
-    pthread_mutex_destroy(&mut->mut);\
+void _cat(thrd_mtx(type), _free)(thrd_mtx(type)* mtx) {\
+    pthread_mutex_destroy(&mtx->mtx);\
 }\
 thrd_mtx(type) _cat(thrd_mtx(type), _init)(type val) {\
-    thrd_mtx(type) mut = {\
+    thrd_mtx(type) mtx = {\
         .val = val,\
         .lock = _cat(thrd_mtx(type), _lock),\
         .unlock = _cat(thrd_mtx(type), _unlock),\
         .free = _cat(thrd_mtx(type), _free)\
     };\
-    pthread_mutex_init(&mut.mut, NULL);\
-    return mut;\
+    pthread_mutex_init(&mtx.mtx, NULL);\
+    return mtx;\
+}
+
+
+#define thrd_rwlck(type) _cat(_thrd_rwlck_, type)
+#define thrd_rwlck_init(type) _cat(thrd_rwlck(type), _init)
+
+#define thrd_rwlck_lock(m) m.lock(&m)
+#define thrd_rwlck_rlock(m) m.rlock(&m)
+#define thrd_rwlck_unlock(m) m.unlock(&m)
+#define thrd_rwlck_free(m) m.free(&m)
+
+#define RWLOCK(type)\
+typedef struct _cat(__thrd_rwlck_, type) {\
+    pthread_rwlock_t lck;\
+    type val;\
+    type* (*lock)(struct _cat(__thrd_rwlck_, type)*);\
+    const type* (*rlock)(struct _cat(__thrd_rwlck_, type)*);\
+    void (*unlock)(struct _cat(__thrd_rwlck_, type)*);\
+    void (*free)(struct _cat(__thrd_rwlck_, type)*);\
+} thrd_rwlck(type);\
+type* _cat(thrd_rwlck(type), _lock)(thrd_rwlck(type)* lck){\
+    pthread_rwlock_wrlock(&lck->lck);\
+    return &lck->val;\
+}\
+const type* _cat(thrd_rwlck(type), _rlock)(thrd_rwlck(type)* lck){\
+    pthread_rwlock_rdlock(&lck->lck);\
+    return &lck->val;\
+}\
+void _cat(thrd_rwlck(type), _unlock)(thrd_rwlck(type)* lck){\
+    pthread_rwlock_unlock(&lck->lck);\
+}\
+void _cat(thrd_rwlck(type), _free)(thrd_rwlck(type)* lck) {\
+    pthread_rwlock_destroy(&lck->lck);\
+}\
+thrd_rwlck(type) _cat(thrd_rwlck(type), _init)(type val) {\
+    thrd_rwlck(type) lck = {\
+        .val = val,\
+        .lock = _cat(thrd_rwlck(type), _lock),\
+        .rlock = _cat(thrd_rwlck(type), _rlock),\
+        .unlock = _cat(thrd_rwlck(type), _unlock),\
+        .free = _cat(thrd_rwlck(type), _free)\
+    };\
+    pthread_rwlock_init(&lck.lck, NULL);\
+    return lck;\
 }
 
 // chan

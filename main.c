@@ -1,34 +1,44 @@
 #include <stdio.h>
 #include "thrd.h"
 
-MUTEX(float)
+RWLOCK(float)
 
-thrd_mtx(float) shared;
+thrd_rwlck(float) shared;
 
-THREAD(void*, foo) {
-    for(size_t i = 0; i < 100000; i++) {
-        float* val = thrd_mtx_lock(shared);
-        *val *= 2.0f;
-        *val /= 2.0f;
-        thrd_mtx_unlock(shared);
-    }
+THREAD(void*, foo, size_t i) {
+    printf("read%ld: %f\n", arg->i, *thrd_rwlck_rlock(shared));
+    sleep(arg->i);
+    thrd_rwlck_unlock(shared);
+}
+
+THREAD(void*, bar, size_t i) {
+    float* val = thrd_rwlck_lock(shared);
+    *val *= 2.0f;
+    *val /= 2.0f;
+
+    printf("write%ld: %f\n", arg->i, *val);
+    sleep(arg->i);
+    thrd_rwlck_unlock(shared);
 }
 
 int main() {
-    shared = thrd_mtx_init(float)(1.6f);
- 
-    thrd(foo) th0;
-    thrd(foo) th1;
+    shared = thrd_rwlck_init(float)(1.6f);
+    
+    thrd(foo) rd[2];
+    thrd_create(foo, rd[0], 1);
+    thrd_create(foo, rd[1], 2);
 
-    thrd_create(foo, th0);
-    thrd_create(foo, th1);
+    thrd(bar) wr[2];
+    thrd_create(bar, wr[0], 1);
+    thrd_create(bar, wr[1], 2);
 
-    thrd_join(th0);
-    thrd_join(th1);
+    thrd_join(rd[0]);
+    thrd_join(rd[1]);
 
-    printf("shared: %f\n", shared.val);
+    thrd_join(wr[0]);
+    thrd_join(wr[1]);
 
-    thrd_mtx_free(shared);
+    thrd_rwlck_free(shared);
 
     return 0;
 }
