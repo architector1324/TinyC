@@ -21,12 +21,12 @@
 #define _foreach(...) _foreach_counter(__VA_ARGS__, _foreach8, _foreach7, _foreach6, _foreach5, _foreach4, _foreach3, _foreach2, _foreach1)(__VA_ARGS__)
 
 // base
-
 #define thrd(name) _cat(_thrd_, name)
 #define thrd_args(name) _cat(_thrd_args_, name)
 #define thrd_init(name) _cat(thrd(name), _init)
-
 #define thrd_create(name, th, args...) _cat(thrd(name), _create)(&th, (thrd_args(name)){args})
+#define thrd_call(name, args...) name(&(thrd_args(name)){args})
+
 #define thrd_join(th) th.join(&th)
 
 #define THREAD(type, name, args...)\
@@ -55,5 +55,8 @@ void _cat(thrd(name), _create)(thrd(name)* th, thrd_args(name) arg){\
     pthread_create(&th->th, NULL, _cat(thrd(name), _bootstrap), th);\
 }\
 type name(const thrd_args(name)* arg)
+
+
+// chan
 
 #endif
