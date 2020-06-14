@@ -1,6 +1,7 @@
 #ifndef THRD
 #define THRD
 
+#include <stdbool.h>
 #include <pthread.h>
 #include <stdlib.h>
 
@@ -138,5 +139,54 @@ thrd_rwlck(type) _cat(thrd_rwlck(type), _init)(type val) {\
 }
 
 // chan
+#define thrd_chan(type) _cat(_thrd_chan_, type)
+#define thrd_chan_init(type) _cat(thrd_chan(type), _init)
+
+#define thrd_chan_snd(ch, val) ch.snd(&ch, val)
+#define thrd_chan_recv(ch) ch.recv(&ch)
+#define thrd_chan_free(ch) ch.free(&ch)
+
+#define CHAN(type)\
+MUTEX(type)\
+typedef struct _cat(__thrd_chan_, type) {\
+    thrd_mtx(type) mtx;\
+    bool receiving;\
+    bool sent;\
+    pthread_cond_t _cond;\
+    void (*snd)(struct _cat(__thrd_chan_, type)*, type);\
+    type (*recv)(struct _cat(__thrd_chan_, type)*);\
+    void (*free)(struct _cat(__thrd_chan_, type)*);\
+} thrd_chan(type);\
+void _cat(thrd_chan(type), _snd)(thrd_chan(type)* ch, type val) {\
+    type* v = thrd_mtx_lock(ch->mtx);\
+    while(!ch->receiving) pthread_cond_wait(&ch->_cond, &ch->mtx.mtx);\
+    *v = val;\
+    ch->sent = true;\
+    ch->receiving = false;\
+    pthread_cond_signal(&ch->_cond);\
+    thrd_mtx_unlock(ch->mtx);\
+}\
+type _cat(thrd_chan(type), _recv)(thrd_chan(type)* ch) {\
+    type* val = thrd_mtx_lock(ch->mtx);\
+    ch->receiving = true;\
+    pthread_cond_signal(&ch->_cond);\
+    while(!ch->sent) pthread_cond_wait(&ch->_cond, &ch->mtx.mtx);\
+    ch->sent = false;\
+    thrd_mtx_unlock(ch->mtx);\
+    return *val;\
+}\
+void _cat(thrd_chan(type), _free)(thrd_chan(type)* ch) {\
+    pthread_cond_destroy(&ch->_cond);\
+}\
+thrd_chan(type) _cat(thrd_chan(type), _init)() {\
+    thrd_chan(type) ch = {\
+        .mtx = thrd_mtx_init(type)(0),\
+        .snd = _cat(thrd_chan(type), _snd),\
+        .recv = _cat(thrd_chan(type), _recv),\
+        .free = _cat(thrd_chan(type), _free)\
+    };\
+    pthread_cond_init(&ch._cond, NULL);\
+    return ch;\
+}
 
 #endif

@@ -1,44 +1,32 @@
 #include <stdio.h>
 #include "thrd.h"
 
-RWLOCK(float)
+CHAN(float)
 
-thrd_rwlck(float) shared;
+thrd_chan(float) ch;
 
-THREAD(void*, foo, size_t i) {
-    printf("read%ld: %f\n", arg->i, *thrd_rwlck_rlock(shared));
-    sleep(arg->i);
-    thrd_rwlck_unlock(shared);
+THREAD(void*, prod, float a) {
+    printf("snd: %f\n", arg->a);
+    thrd_chan_snd(ch, arg->a);
 }
 
-THREAD(void*, bar, size_t i) {
-    float* val = thrd_rwlck_lock(shared);
-    *val *= 2.0f;
-    *val /= 2.0f;
-
-    printf("write%ld: %f\n", arg->i, *val);
-    sleep(arg->i);
-    thrd_rwlck_unlock(shared);
+THREAD(void*, cons) {
+    printf("recv: %f\n", thrd_chan_recv(ch));
 }
 
 int main() {
-    shared = thrd_rwlck_init(float)(1.6f);
-    
-    thrd(foo) rd[2];
-    thrd_create(foo, rd[0], 1);
-    thrd_create(foo, rd[1], 2);
+    ch = thrd_chan_init(float)();
 
-    thrd(bar) wr[2];
-    thrd_create(bar, wr[0], 1);
-    thrd_create(bar, wr[1], 2);
+    thrd(prod) th0;
+    thrd(cons) th1;
 
-    thrd_join(rd[0]);
-    thrd_join(rd[1]);
+    thrd_create(prod, th0, 3.14f);
+    thrd_create(cons, th1);
 
-    thrd_join(wr[0]);
-    thrd_join(wr[1]);
+    thrd_join(th0);
+    thrd_join(th1);
 
-    thrd_rwlck_free(shared);
+    thrd_chan_free(ch);
 
     return 0;
 }
