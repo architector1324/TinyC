@@ -1,32 +1,29 @@
 #include <stdio.h>
 #include "thrd.h"
 
-CHAN(float)
+QCHAN(float)
 
-thrd_chan(float) ch;
+thrd_qchan(float) ch;
 
-THREAD(void*, prod, float a) {
-    printf("snd: %f\n", arg->a);
-    thrd_chan_snd(ch, arg->a);
-}
-
-THREAD(void*, cons) {
-    printf("recv: %f\n", thrd_chan_recv(ch));
+THREAD(void*, A) {
+    printf("send: 1.0 2.0 3.0\n");
+    thrd_qchan_snd(ch, 1.0f);
+    thrd_qchan_snd(ch, 2.0f);
+    thrd_qchan_snd(ch, 3.0f);
 }
 
 int main() {
-    ch = thrd_chan_init(float)();
+    ch = thrd_qchan_init(float)();
 
-    thrd(prod) th0;
-    thrd(cons) th1;
+    thrd(A) th;
+    thrd_create(A, th);
 
-    thrd_create(prod, th0, 3.14f);
-    thrd_create(cons, th1);
+    sleep(2);
 
-    thrd_join(th0);
-    thrd_join(th1);
+    printf("recv: %f\n", thrd_qchan_recv(ch));
+    printf("recv: %f\n", thrd_qchan_recv(ch));
+    printf("recv: %f\n", thrd_qchan_recv(ch));
 
-    thrd_chan_free(ch);
-
+    thrd_qchan_free(ch);
     return 0;
 }

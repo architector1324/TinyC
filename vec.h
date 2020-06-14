@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 // settings
-#define VEC_DEF_STD
+// #define VEC_DEF_STD
 #define VEC_REALLOC_FACTOR 1.6f
 
 // extra

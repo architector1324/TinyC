@@ -5,9 +5,9 @@
 #include <pthread.h>
 #include <stdlib.h>
 
+#include "vec.h"
+
 // extra
-#define __cat(X, Y) X##Y
-#define _cat(X, Y) __cat(X, Y)
 
 #define _foreach1(x) x;
 #define _foreach2(x, ...) x; _foreach1(__VA_ARGS__)
@@ -184,6 +184,54 @@ thrd_chan(type) _cat(thrd_chan(type), _init)() {\
         .snd = _cat(thrd_chan(type), _snd),\
         .recv = _cat(thrd_chan(type), _recv),\
         .free = _cat(thrd_chan(type), _free)\
+    };\
+    pthread_cond_init(&ch._cond, NULL);\
+    return ch;\
+}
+
+// queue chan
+#define thrd_qchan(type) _cat(_thrd_qchan_, type)
+#define thrd_qchan_init(type) _cat(thrd_qchan(type), _init)
+
+#define thrd_qchan_snd(ch, val) ch.snd(&ch, val)
+#define thrd_qchan_recv(ch) ch.recv(&ch)
+#define thrd_qchan_free(ch) ch.free(&ch)
+
+#define QCHAN(type)\
+VECTOR(type)\
+MUTEX(vec(type))\
+typedef struct _cat(__thrd_qchan_, type) {\
+    thrd_mtx(vec(type)) mtx;\
+    pthread_cond_t _cond;\
+    bool receiving;\
+    bool sent;\
+    void (*snd)(struct _cat(__thrd_qchan_, type)*, type);\
+    type (*recv)(struct _cat(__thrd_qchan_, type)*);\
+    void (*free)(struct _cat(__thrd_qchan_, type)*);\
+} thrd_qchan(type);\
+void _cat(thrd_qchan(type), _snd)(thrd_qchan(type)* ch, type val) {\
+    vec(type)* v = thrd_mtx_lock(ch->mtx);\
+    v->push(v, val);\
+    pthread_cond_signal(&ch->_cond);\
+    thrd_mtx_unlock(ch->mtx);\
+}\
+type _cat(thrd_qchan(type), _recv)(thrd_qchan(type)* ch) {\
+    vec(type)* v = thrd_mtx_lock(ch->mtx);\
+    while(v->size == 0) pthread_cond_wait(&ch->_cond, &ch->mtx.mtx);\
+    type res = v->pop(v);\
+    thrd_mtx_unlock(ch->mtx);\
+    return res;\
+}\
+void _cat(thrd_qchan(type), _free)(thrd_qchan(type)* ch) {\
+    pthread_cond_destroy(&ch->_cond);\
+    vec_free(ch->mtx.val);\
+}\
+thrd_qchan(type) _cat(thrd_qchan(type), _init)() {\
+    thrd_qchan(type) ch = {\
+        .mtx = thrd_mtx_init(vec(type))(vec_init(type)()),\
+        .snd = _cat(thrd_qchan(type), _snd),\
+        .recv = _cat(thrd_qchan(type), _recv),\
+        .free = _cat(thrd_qchan(type), _free)\
     };\
     pthread_cond_init(&ch._cond, NULL);\
     return ch;\
