@@ -8,7 +8,6 @@
 #include "vec.h"
 
 // extra
-
 #define _foreach1(x) x;
 #define _foreach2(x, ...) x; _foreach1(__VA_ARGS__)
 #define _foreach3(x, ...) x; _foreach2(__VA_ARGS__)
@@ -38,12 +37,13 @@ typedef struct _cat(__thrd_, name) {\
     pthread_t th;\
     thrd_args(name) arg;\
     type res;\
+    type (*f)(thrd_args(name)* arg);\
     type (*join)(struct _cat(__thrd_, name)*);\
 } thrd(name);\
-type name(const thrd_args(name)* arg);\
+type name(thrd_args(name)* arg);\
 void* _cat(thrd(name), _bootstrap)(void* raw) {\
     thrd(name)* th = (thrd(name)*)(raw);\
-    th->res = name(&th->arg);\
+    th->res = th->f(&th->arg);\
     return th;\
 }\
 type _cat(thrd(name), _join)(thrd(name)* th){\
@@ -53,9 +53,10 @@ type _cat(thrd(name), _join)(thrd(name)* th){\
 void _cat(thrd(name), _create)(thrd(name)* th, thrd_args(name) arg){\
     th->arg = arg;\
     th->join = _cat(thrd(name), _join);\
+    th->f = name;\
     pthread_create(&th->th, NULL, _cat(thrd(name), _bootstrap), th);\
 }\
-type name(const thrd_args(name)* arg)
+type name(thrd_args(name)* arg)
 
 // sync
 #define thrd_mtx(type) _cat(_thrd_mtx_, type)
