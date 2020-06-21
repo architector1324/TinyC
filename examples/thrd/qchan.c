@@ -5,7 +5,9 @@ QCHAN(float)
 
 thrd_qchan(float) ch;
 
-THREAD(void*, A) {
+THREAD(void*, foo_t, void*, dumb);
+
+void* foo() {
     printf("send: 1.0 2.0 3.0\n");
     thrd_qchan_snd(ch, 1.0f);
     thrd_qchan_snd(ch, 2.0f);
@@ -15,8 +17,8 @@ THREAD(void*, A) {
 int main() {
     ch = thrd_qchan_init(float)();
 
-    thrd(A) th;
-    thrd_create(A, th);
+    thrd(foo_t) th;
+    thrd_create(foo_t, th, foo);
 
     sleep(2);
 

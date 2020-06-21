@@ -8,55 +8,92 @@
 #include "vec.h"
 
 // extra
-#define _foreach1(x) x;
-#define _foreach2(x, ...) x; _foreach1(__VA_ARGS__)
-#define _foreach3(x, ...) x; _foreach2(__VA_ARGS__)
-#define _foreach4(x, ...) x; _foreach3(__VA_ARGS__)
-#define _foreach5(x, ...) x; _foreach4(__VA_ARGS__)
-#define _foreach6(x, ...) x; _foreach5(__VA_ARGS__)
-#define _foreach7(x, ...) x; _foreach6(__VA_ARGS__)
-#define _foreach8(x, ...) x; _foreach7(__VA_ARGS__)
+// ... -> count(...) [max 6]
+#define _foreach_counter(_0, _1, _2, _3, _4, _5, _6, x, ...) x
+#define _foreach_chooser(...) _foreach_counter(__VA_ARGS__, 6, 5, 4, 3, 2, 1, 0)
 
-#define _foreach_counter(_1, _2, _3, _4, _5, _6, _7, _8, x, ...) x
-#define _foreach(...) _foreach_counter(__VA_ARGS__, _foreach8, _foreach7, _foreach6, _foreach5, _foreach4, _foreach3, _foreach2, _foreach1)(__VA_ARGS__)
+
+// ... -> 2 * count(...) [max 6]
+#define _foreach2_counter(\
+    _0_0, _0_1,\
+    _1_0, _1_1,\
+    _2_0, _2_1,\
+    _3_0, _3_1,\
+    _4_0, _4_1,\
+    _5_0, _5_1,\
+    _6_0, _6_1,\
+    x, ...) x
+#define _foreach2_chooser(...) _foreach2_counter(__VA_ARGS__, 6, 6, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0)
+
+// type declarators
+#define __type_decl0(x, y, ...) x y;
+#define __type_decl1(x, y, ...) x y; __type_decl0(__VA_ARGS__)
+#define __type_decl2(x, y, ...) x y; __type_decl1(__VA_ARGS__)
+#define __type_decl3(x, y, ...) x y; __type_decl2(__VA_ARGS__)
+#define __type_decl4(x, y, ...) x y; __type_decl3(__VA_ARGS__)
+#define __type_decl5(x, y, ...) x y; __type_decl4(__VA_ARGS__)
+#define __type_decl6(x, y, ...) x y; __type_decl5(__VA_ARGS__)
+
+#define _type_decl(...) _cat(__type_decl, _foreach2_chooser(__VA_ARGS__))(__VA_ARGS__)
+
+#define __type_decl_comma0(x, y, ...) x y
+#define __type_decl_comma1(x, y, ...) x y, __type_decl_comma0(__VA_ARGS__)
+#define __type_decl_comma2(x, y, ...) x y, __type_decl_comma1(__VA_ARGS__)
+#define __type_decl_comma3(x, y, ...) x y, __type_decl_comma2(__VA_ARGS__)
+#define __type_decl_comma4(x, y, ...) x y, __type_decl_comma3(__VA_ARGS__)
+#define __type_decl_comma5(x, y, ...) x y, __type_decl_comma4(__VA_ARGS__)
+#define __type_decl_comma6(x, y, ...) x y, __type_decl_comma5(__VA_ARGS__)
+
+#define _type_decl_comma(...) _cat(__type_decl_comma, _foreach2_chooser(__VA_ARGS__))(__VA_ARGS__)
+
+// argument chooser
+#define __arg_chooser0(pre, x, y, ...) pre y
+#define __arg_chooser1(pre, x, y, ...) pre y, __arg_chooser0(pre, __VA_ARGS__)
+#define __arg_chooser2(pre, x, y, ...) pre y, __arg_chooser1(pre, __VA_ARGS__)
+#define __arg_chooser3(pre, x, y, ...) pre y, __arg_chooser2(pre, __VA_ARGS__)
+#define __arg_chooser4(pre, x, y, ...) pre y, __arg_chooser3(pre, __VA_ARGS__)
+#define __arg_chooser5(pre, x, y, ...) pre y, __arg_chooser4(pre, __VA_ARGS__)
+#define __arg_chooser6(pre, x, y, ...) pre y, __arg_chooser5(pre, __VA_ARGS__)
+
+#define _arg_chooser(pre, ...) _cat(__arg_chooser, _foreach2_chooser(__VA_ARGS__))(pre, __VA_ARGS__)
+
 
 // base
 #define thrd(name) _cat(_thrd_, name)
 #define thrd_args(name) _cat(_thrd_args_, name)
 #define thrd_init(name) _cat(thrd(name), _init)
-#define thrd_create(name, th, args...) _cat(thrd(name), _create)(&th, (thrd_args(name)){args})
+#define thrd_create(name, th, f, args...) _cat(thrd(name), _create)(&th, f, (thrd_args(name)){args})
 #define thrd_call(name, args...) name(&(thrd_args(name)){args})
 
 #define thrd_join(th) th.join(&th)
 
 #define THREAD(type, name, args...)\
 typedef struct _cat(__thrd_args_, name) {\
-    _foreach(args)\
+    _type_decl(args)\
 } thrd_args(name);\
 typedef struct _cat(__thrd_, name) {\
     pthread_t th;\
     thrd_args(name) arg;\
     type res;\
-    type (*f)(thrd_args(name)* arg);\
+    type (*f)(_type_decl_comma(args));\
     type (*join)(struct _cat(__thrd_, name)*);\
 } thrd(name);\
-type name(thrd_args(name)* arg);\
 void* _cat(thrd(name), _bootstrap)(void* raw) {\
     thrd(name)* th = (thrd(name)*)(raw);\
-    th->res = th->f(&th->arg);\
+    th->res = th->f(_arg_chooser(th->arg., args));\
     return th;\
 }\
 type _cat(thrd(name), _join)(thrd(name)* th){\
     pthread_join(th->th, NULL);\
     return th->res;\
 }\
-void _cat(thrd(name), _create)(thrd(name)* th, thrd_args(name) arg){\
+void _cat(thrd(name), _create)(thrd(name)* th, type (*f)(_type_decl_comma(args)), thrd_args(name) arg){\
     th->arg = arg;\
     th->join = _cat(thrd(name), _join);\
-    th->f = name;\
+    th->f = f;\
     pthread_create(&th->th, NULL, _cat(thrd(name), _bootstrap), th);\
 }\
-type name(thrd_args(name)* arg)
+
 
 // sync
 #define thrd_mtx(type) _cat(_thrd_mtx_, type)
