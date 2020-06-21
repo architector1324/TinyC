@@ -75,24 +75,31 @@ typedef struct _cat(__thrd_, name) {\
     pthread_t th;\
     thrd_args(name) arg;\
     type res;\
+    bool run;\
     type (*f)(_type_decl_comma(args));\
     type (*join)(struct _cat(__thrd_, name)*);\
 } thrd(name);\
 void* _cat(thrd(name), _bootstrap)(void* raw) {\
     thrd(name)* th = (thrd(name)*)(raw);\
     th->res = th->f(_arg_chooser(th->arg., args));\
+    th->run = false;\
     return th;\
 }\
 type _cat(thrd(name), _join)(thrd(name)* th){\
     pthread_join(th->th, NULL);\
     return th->res;\
 }\
-void _cat(thrd(name), _create)(thrd(name)* th, type (*f)(_type_decl_comma(args)), thrd_args(name) arg){\
-    th->arg = arg;\
-    th->join = _cat(thrd(name), _join);\
-    th->f = f;\
-    pthread_create(&th->th, NULL, _cat(thrd(name), _bootstrap), th);\
-}\
+bool _cat(thrd(name), _create)(thrd(name)* th, type (*f)(_type_decl_comma(args)), thrd_args(name) arg){\
+    if(!th->run) {\
+        th->run = true;\
+        th->arg = arg;\
+        th->join = _cat(thrd(name), _join);\
+        th->f = f;\
+        pthread_create(&th->th, NULL, _cat(thrd(name), _bootstrap), th);\
+        return true;\
+    }\
+    return false;\
+}
 
 
 // sync
