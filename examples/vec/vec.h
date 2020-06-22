@@ -15,6 +15,7 @@
 #define vec(type) _cat(_vec_, type)
 #define vec_init(type) _cat(vec(type), _init)
 
+#define vec_at(v, i) v.at(&v, i)
 #define vec_push(v, e) v.push(&v, e)
 #define vec_pop(v) v.pop(&v)
 #define vec_reserve(v, count) v.reserve(&v, count)
@@ -25,11 +26,19 @@ typedef struct _cat(_, vec(type)) {\
     type* data;\
     size_t size;\
     size_t cap;\
+    type (*at)(struct _cat(_, vec(type))*, size_t);\
     void (*push)(struct _cat(_, vec(type))*, type);\
     type (*pop)(struct _cat(_, vec(type))*);\
     void (*reserve)(struct _cat(_, vec(type))*, size_t);\
     void (*free)(struct _cat(_, vec(type))*);\
 } vec(type);\
+type _cat(vec(type), _at)(vec(type)* v, size_t i) {\
+    if(i >= v->size) {\
+        fprintf(stderr, "vec:at: index out of bounds!\n");\
+        abort();\
+    }\
+    return v->data[i];\
+}\
 void _cat(vec(type), _push)(vec(type)* v, type e) {\
     if(v->size == v->cap) {\
         v->cap *= VECTOR_REALLOC_FACTOR;\
@@ -60,6 +69,7 @@ void _cat(vec(type), _free)(vec(type)* v) {\
     v->cap = 0;\
     free(v->data);\
     v->data = NULL;\
+    v->at = NULL;\
     v->push = NULL;\
     v->pop = NULL;\
     v->reserve = NULL;\
@@ -70,6 +80,7 @@ vec(type) _cat(vec(type), _init)() {\
         .data = malloc(2 * sizeof(type)),\
         .size = 0,\
         .cap = 2,\
+        .at = _cat(vec(type), _at),\
         .push = _cat(vec(type), _push),\
         .pop = _cat(vec(type), _pop),\
         .reserve = _cat(vec(type), _reserve),\

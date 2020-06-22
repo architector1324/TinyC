@@ -15,6 +15,7 @@
 #define mvec(type) _cat(_mvec_, type)
 #define mvec_init(type) _cat(mvec(type), _init)
 
+#define mvec_at(v, i) v.at(&v, i)
 #define mvec_push(v, e) v.push(&v, e)
 #define mvec_pop(v) v.pop(&v)
 
@@ -22,9 +23,17 @@
 typedef struct _cat(__mvec_, type) {\
     type data[MICRO_VECTOR_SIZE];\
     size_t size;\
+    type (*at)(struct _cat(_, mvec(type))*, size_t);\
     void (*push)(struct _cat(_, mvec(type))*, type);\
     type (*pop)(struct _cat(_, mvec(type))*);\
 } mvec(type);\
+type _cat(mvec(type), _at)(mvec(type)* v, size_t i) {\
+    if(i >= v->size) {\
+        fprintf(stderr, "mvec:at: index out of bounds!\n");\
+        abort();\
+    }\
+    return v->data[i];\
+}\
 void _cat(mvec(type), _push)(mvec(type)* v, type e) {\
     if(v->size == MICRO_VECTOR_SIZE) {\
         fprintf(stderr, "mvec:push: full vector!\n");\
@@ -42,6 +51,7 @@ type _cat(mvec(type), _pop)(mvec(type)* v) {\
 mvec(type) _cat(mvec(type), _init)() {\
     return (mvec(type)) {\
         .size = 0,\
+        .at = _cat(mvec(type), _at),\
         .push = _cat(mvec(type), _push),\
         .pop = _cat(mvec(type), _pop)\
     };\

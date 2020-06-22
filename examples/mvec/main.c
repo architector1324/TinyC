@@ -11,7 +11,7 @@ int main() {
     mvec_push(v, 1.0f);
 
     float b = mvec_pop(v);
-    printf("%f %f %f\nsize=%ld\n", v.data[0], v.data[1], b, v.size);
+    printf("%f %f %f\nsize=%ld\n", mvec_at(v, 0), mvec_at(v, 1), b, v.size);
 
     return 0;
 }
