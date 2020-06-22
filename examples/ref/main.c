@@ -18,4 +18,6 @@ int main() {
     printf("%f %f\n", *v.data[0], *v.data[1]);
 
     vec_free(v);
+
+    return 0;
 }

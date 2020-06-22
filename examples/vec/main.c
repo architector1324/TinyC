@@ -15,4 +15,6 @@ int main() {
     printf("cap=%ld size=%ld\n", v.cap, v.size);
 
     vec_free(v);
+
+    return 0;
 }
