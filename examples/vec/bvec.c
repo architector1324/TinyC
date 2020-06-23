@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "bvec.h"
+#include "vec.h"
 
 BIG_VECTOR(float)
 
