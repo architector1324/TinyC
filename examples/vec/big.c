@@ -1,17 +1,17 @@
 #include <stdio.h>
-#include "bvec.h"
+#include "vec.h"
 
 BIG_VECTOR(float)
 
 int main() {
-    bvec(float) v = bvec_init(float)("tmp.dat");
+    vec_big(float) v = vec_big_init(float)("tmp.dat");
 
     // 10Gb
     for(size_t i = 0; i < 2684354560; i++) {
-        bvec_push(v, 3.14f);
+        vec_push(v, 3.14f);
     }
     printf("size=%ld\n", v.size);
 
-    bvec_free(v);
+    vec_free(v);
     return 0;
 }

@@ -2,10 +2,9 @@
 #include "thrd.h"
 
 CHAN(float)
+THREAD(void*, prod_t, float, a);
 
 thrd_chan(float) ch;
-
-THREAD(void*, prod_t, float, a);
 
 void* prod(float a) {
     printf("snd: %f\n", a);

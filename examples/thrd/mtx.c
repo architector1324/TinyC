@@ -2,10 +2,9 @@
 #include "thrd.h"
 
 MUTEX(float)
+THREAD(void*, foo_t, void*, dumb);
 
 thrd_mtx(float) shared;
-
-THREAD(void*, foo_t, void*, dumb);
 
 void* foo() {
     for(size_t i = 0; i < 100000; i++) {

@@ -7,6 +7,7 @@
 // #define VECTOR_DEF_STD
 // #define MICRO_VECTOR_DEF_STD
 // #define BIG_VECTOR_DEF_STD
+#define MICRO_VECTOR_SIZE 100
 #define VECTOR_REALLOC_FACTOR 1.6f
 
 // extra
@@ -91,119 +92,110 @@ vec(type) _cat(vec(type), _init)() {\
 }
 
 // micro vector
-#define mvec(type) _cat(_mvec_, type)
-#define mvec_init(type) _cat(mvec(type), _init)
-
-#define mvec_at(v, i) v.at(&v, i)
-#define mvec_push(v, e) v.push(&v, e)
-#define mvec_pop(v) v.pop(&v)
+#define vec_micro(type) _cat(_vec_micro_, type)
+#define vec_micro_init(type) _cat(vec_micro(type), _init)
 
 #define MICRO_VECTOR(type)\
-typedef struct _cat(__mvec_, type) {\
+typedef struct _cat(__vec_micro_, type) {\
     type data[MICRO_VECTOR_SIZE];\
     size_t size;\
-    type (*at)(struct _cat(_, mvec(type))*, size_t);\
-    void (*push)(struct _cat(_, mvec(type))*, type);\
-    type (*pop)(struct _cat(_, mvec(type))*);\
-} mvec(type);\
-type _cat(mvec(type), _at)(mvec(type)* v, size_t i) {\
+    type (*at)(struct _cat(_, vec_micro(type))*, size_t);\
+    void (*push)(struct _cat(_, vec_micro(type))*, type);\
+    type (*pop)(struct _cat(_, vec_micro(type))*);\
+} vec_micro(type);\
+type _cat(vec_micro(type), _at)(vec_micro(type)* v, size_t i) {\
     if(i >= v->size) {\
-        fprintf(stderr, "mvec:at: index out of bounds!\n");\
+        fprintf(stderr, "vec_micro:at: index out of bounds!\n");\
         abort();\
     }\
     return v->data[i];\
 }\
-void _cat(mvec(type), _push)(mvec(type)* v, type e) {\
+void _cat(vec_micro(type), _push)(vec_micro(type)* v, type e) {\
     if(v->size == MICRO_VECTOR_SIZE) {\
-        fprintf(stderr, "mvec:push: full vector!\n");\
+        fprintf(stderr, "vec_micro:push: full vector!\n");\
         abort();\
     }\
     v->data[v->size++] = e;\
 }\
-type _cat(mvec(type), _pop)(mvec(type)* v) {\
+type _cat(vec_micro(type), _pop)(vec_micro(type)* v) {\
     if(v->size == 0) {\
-        fprintf(stderr, "mvec:pop: empty vector!\n");\
+        fprintf(stderr, "vec_micro:pop: empty vector!\n");\
         abort();\
     }\
     return v->data[--v->size];\
 }\
-mvec(type) _cat(mvec(type), _init)() {\
-    return (mvec(type)) {\
+vec_micro(type) _cat(vec_micro(type), _init)() {\
+    return (vec_micro(type)) {\
         .size = 0,\
-        .at = _cat(mvec(type), _at),\
-        .push = _cat(mvec(type), _push),\
-        .pop = _cat(mvec(type), _pop)\
+        .at = _cat(vec_micro(type), _at),\
+        .push = _cat(vec_micro(type), _push),\
+        .pop = _cat(vec_micro(type), _pop)\
     };\
 }
 
 // big vector
-#define bvec(type) _cat(_bvec_, type)
-#define bvec_init(type) _cat(bvec(type), _init)
-
-#define bvec_at(v, i) v.at(&v, i)
-#define bvec_push(v, e) v.push(&v, e)
-#define bvec_pop(v) v.pop(&v)
-#define bvec_free(v) v.free(&v)
+#define vec_big(type) _cat(_vec_big_, type)
+#define vec_big_init(type) _cat(vec_big(type), _init)
 
 #define BIG_VECTOR(type)\
-typedef struct _cat(_, bvec(type)) {\
+typedef struct _cat(_, vec_big(type)) {\
     FILE* _data;\
     size_t size;\
-    type (*at)(struct _cat(_, bvec(type))*, size_t);\
-    void (*push)(struct _cat(_, bvec(type))*, type);\
-    type (*pop)(struct _cat(_, bvec(type))*);\
-    void (*free)(struct _cat(_, bvec(type))*);\
-} bvec(type);\
-type _cat(bvec(type), _at)(bvec(type)* v, size_t i) {\
+    type (*at)(struct _cat(_, vec_big(type))*, size_t);\
+    void (*push)(struct _cat(_, vec_big(type))*, type);\
+    type (*pop)(struct _cat(_, vec_big(type))*);\
+    void (*free)(struct _cat(_, vec_big(type))*);\
+} vec_big(type);\
+type _cat(vec_big(type), _at)(vec_big(type)* v, size_t i) {\
     type res;\
     if(i >= v->size) {\
-        fprintf(stderr, "bvec:at: index out of bounds!\n");\
+        fprintf(stderr, "vec_big:at: index out of bounds!\n");\
         abort();\
     }\
     long pos = ftell(v->_data);\
     if(fseek(v->_data, i * sizeof(type), SEEK_SET)) {\
-        fprintf(stderr, "bvec:at: invalid read!\n");\
+        fprintf(stderr, "vec_big:at: invalid read!\n");\
         abort();\
     }\
     if(fread(&res, sizeof(type), 1, v->_data) != 1) {\
-        fprintf(stderr, "bvec:at: invalid read!\n");\
+        fprintf(stderr, "vec_big:at: invalid read!\n");\
         abort();\
     }\
     if(fseek(v->_data, (size_t)pos, SEEK_SET)) {\
-        fprintf(stderr, "bvec:at: invalid read!\n");\
+        fprintf(stderr, "vec_big:at: invalid read!\n");\
         abort();\
     }\
     return res;\
 }\
-void _cat(bvec(type), _push)(bvec(type)* v, type e) {\
+void _cat(vec_big(type), _push)(vec_big(type)* v, type e) {\
     v->size++;\
     if(fwrite(&e, sizeof(type), 1, v->_data) != 1) {\
-        fprintf(stderr, "bvec:push: invalid write!\n");\
+        fprintf(stderr, "vec_big:push: invalid write!\n");\
         abort();\
     }\
 }\
-type _cat(bvec(type), _pop)(bvec(type)* v) {\
+type _cat(vec_big(type), _pop)(vec_big(type)* v) {\
     type res;\
     if(v->size == 0) {\
-        fprintf(stderr, "bvec:pop: empty vector!\n");\
+        fprintf(stderr, "vec_big:pop: empty vector!\n");\
         abort();\
     }\
     v->size--;\
     if(fseek(v->_data, -sizeof(type), SEEK_CUR)) {\
-        fprintf(stderr, "bvec:pop: invalid read!\n");\
+        fprintf(stderr, "vec_big:pop: invalid read!\n");\
         abort();\
     }\
     if(fread(&res, sizeof(type), 1, v->_data) != 1) {\
-        fprintf(stderr, "bvec:pop: invalid read!\n");\
+        fprintf(stderr, "vec_big:pop: invalid read!\n");\
         abort();\
     }\
     if(fseek(v->_data, -sizeof(type), SEEK_CUR)) {\
-        fprintf(stderr, "bvec:pop: invalid read!\n");\
+        fprintf(stderr, "vec_big:pop: invalid read!\n");\
         abort();\
     }\
     return res;\
 }\
-void _cat(bvec(type), _free)(bvec(type)* v){\
+void _cat(vec_big(type), _free)(vec_big(type)* v){\
     v->size = 0;\
     fclose(v->_data);\
     v->_data = NULL;\
@@ -212,24 +204,24 @@ void _cat(bvec(type), _free)(bvec(type)* v){\
     v->pop = NULL;\
     v->free = NULL;\
 }\
-bvec(type) _cat(bvec(type), _init)(const char* name) {\
+vec_big(type) _cat(vec_big(type), _init)(const char* name) {\
     FILE* f = fopen(name, "a+b");\
     if(fseek(f, 0, SEEK_END)) {\
-        fprintf(stderr, "bvec:init: invalid read!\n");\
+        fprintf(stderr, "vec_big:init: invalid read!\n");\
         abort();\
     }\
     long size = ftell(f);\
     if(size < 0 || size % sizeof(type) > 0) {\
-        fprintf(stderr, "bvec:init: invalid size!\n");\
+        fprintf(stderr, "vec_big:init: invalid size!\n");\
         abort();\
     }\
-    return (bvec(type)){\
+    return (vec_big(type)){\
         ._data = f,\
         .size = (size_t)size/sizeof(type),\
-        .at = _cat(bvec(type), _at),\
-        .push = _cat(bvec(type), _push),\
-        .pop = _cat(bvec(type), _pop),\
-        .free = _cat(bvec(type), _free)\
+        .at = _cat(vec_big(type), _at),\
+        .push = _cat(vec_big(type), _push),\
+        .pop = _cat(vec_big(type), _pop),\
+        .free = _cat(vec_big(type), _free)\
     };\
 }
 

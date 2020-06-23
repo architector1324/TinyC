@@ -2,10 +2,9 @@
 #include "thrd.h"
 
 RWLOCK(float)
+THREAD(void*, foo_t, size_t, i);
 
 thrd_rwlck(float) shared;
-
-THREAD(void*, foo_t, size_t, i);
 
 void* foo(size_t i) {
     printf("read%ld: %f\n", i, *thrd_rwlck_rlock(shared));

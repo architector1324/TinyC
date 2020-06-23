@@ -2,10 +2,9 @@
 #include "thrd.h"
 
 QCHAN(float)
+THREAD(void*, foo_t, void*, dumb);
 
 thrd_qchan(float) ch;
-
-THREAD(void*, foo_t, void*, dumb);
 
 void* foo() {
     printf("send: 1.0 2.0 3.0\n");
