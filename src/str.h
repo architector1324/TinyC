@@ -14,7 +14,7 @@ MICRO_VECTOR(char)
 
 typedef vec_micro(char) str;
 
-str str_cat(str s0, str s1) {
+str str_cat(str s0, const str s1) {
     strncpy(s0.data + s0.size, s1.data, STR_MAX_LEN - (s0.size + s1.size));
     s0.size += s1.size;
     return s0;

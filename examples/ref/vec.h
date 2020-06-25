@@ -29,13 +29,13 @@ typedef struct _cat(_, vec(type)) {\
     type* data;\
     size_t size;\
     size_t cap;\
-    type (*at)(struct _cat(_, vec(type))*, size_t);\
+    type (*at)(const struct _cat(_, vec(type))*, size_t);\
     void (*push)(struct _cat(_, vec(type))*, type);\
     type (*pop)(struct _cat(_, vec(type))*);\
     void (*reserve)(struct _cat(_, vec(type))*, size_t);\
     void (*free)(struct _cat(_, vec(type))*);\
 } vec(type);\
-type _cat(vec(type), _at)(vec(type)* v, size_t i) {\
+type _cat(vec(type), _at)(const vec(type)* v, size_t i) {\
     if(i >= v->size) {\
         fprintf(stderr, "vec:at: index out of bounds!\n");\
         abort();\
@@ -99,11 +99,11 @@ vec(type) _cat(vec(type), _init)() {\
 typedef struct _cat(__vec_micro_, type) {\
     type data[MICRO_VECTOR_SIZE];\
     size_t size;\
-    type (*at)(struct _cat(_, vec_micro(type))*, size_t);\
+    type (*at)(const struct _cat(_, vec_micro(type))*, size_t);\
     void (*push)(struct _cat(_, vec_micro(type))*, type);\
     type (*pop)(struct _cat(_, vec_micro(type))*);\
 } vec_micro(type);\
-type _cat(vec_micro(type), _at)(vec_micro(type)* v, size_t i) {\
+type _cat(vec_micro(type), _at)(const vec_micro(type)* v, size_t i) {\
     if(i >= v->size) {\
         fprintf(stderr, "vec_micro:at: index out of bounds!\n");\
         abort();\
@@ -141,12 +141,12 @@ vec_micro(type) _cat(vec_micro(type), _init)() {\
 typedef struct _cat(_, vec_big(type)) {\
     FILE* _data;\
     size_t size;\
-    type (*at)(struct _cat(_, vec_big(type))*, size_t);\
+    type (*at)(const struct _cat(_, vec_big(type))*, size_t);\
     void (*push)(struct _cat(_, vec_big(type))*, type);\
     type (*pop)(struct _cat(_, vec_big(type))*);\
     void (*free)(struct _cat(_, vec_big(type))*);\
 } vec_big(type);\
-type _cat(vec_big(type), _at)(vec_big(type)* v, size_t i) {\
+type _cat(vec_big(type), _at)(const vec_big(type)* v, size_t i) {\
     type res;\
     if(i >= v->size) {\
         fprintf(stderr, "vec_big:at: index out of bounds!\n");\
