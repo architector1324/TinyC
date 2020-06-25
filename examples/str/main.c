@@ -22,5 +22,13 @@ int main() {
     s = str_repeat(str_from("Def"), 2);
     printf("%s\n", s.data);
 
+    // cmp string and chars array
+    printf("%s\n", str_cmp_from(str_from("Hello!"), "Hello!") ? "true" : "false");
+    printf("%s\n", str_cmp_from(str_from("Hello!"), "Hello!1") ? "true" : "false");
+
+    // cmp string and another string
+    printf("%s\n", str_cmp(str_from("Hello!"), str_from("Hello!")) ? "true" : "false");
+    printf("%s\n", str_cmp(str_from("Hello!"), str_from("Hello!1")) ? "true" : "false");
+
     return 0;
 }

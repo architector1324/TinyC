@@ -1,6 +1,8 @@
 #ifndef STR
 #define STR
 
+#include <stdbool.h>
+
 #include "vec.h"
 #include "string.h"
 
@@ -41,6 +43,15 @@ str str_repeat_from(const char* s, size_t count) {
     str res = str_init();
     for(size_t i = 0; i < count; i++) res = str_cat_from(res, s);
     return res;
+}
+
+bool str_cmp_from(const str s0, const char* s1) {
+    size_t len = strnlen(s1, STR_MAX_LEN - s0.size);
+    return !strncmp(s0.data, s1, STR_MAX_LEN - (s0.size < len ? len : s0.size));
+}
+
+bool str_cmp(const str s0, const str s1) {
+    return !strncmp(s0.data, s1.data, STR_MAX_LEN - (s0.size < s1.size ? s1.size : s0.size));
 }
 
 #endif

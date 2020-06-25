@@ -3,7 +3,7 @@
 #include "ref.h"
 #include "vec.h"
 
-REF(float)
+REFERENCE(float)
 VECTOR(ref(float))
 
 int main() {
