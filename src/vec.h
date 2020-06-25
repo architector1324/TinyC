@@ -1,6 +1,7 @@
 #ifndef VEC
 #define VEC
 
+#include <stdio.h>
 #include <stdlib.h>
 
 // settings

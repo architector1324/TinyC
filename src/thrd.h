@@ -3,7 +3,6 @@
 
 #include <stdbool.h>
 #include <pthread.h>
-#include <stdlib.h>
 
 #include "vec.h"
 

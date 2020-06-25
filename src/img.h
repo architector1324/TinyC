@@ -1,6 +1,7 @@
 #ifndef IMAGE
 #define IMAGE
 
+#include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <png.h>

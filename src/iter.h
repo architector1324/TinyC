@@ -1,6 +1,7 @@
 #ifndef ITER
 #define ITER
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include "tup.h"
