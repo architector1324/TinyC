@@ -8,7 +8,7 @@
 // #define VECTOR_DEF_STD
 // #define MICRO_VECTOR_DEF_STD
 // #define BIG_VECTOR_DEF_STD
-#define MICRO_VECTOR_SIZE 100
+#define MICRO_VECTOR_DEF_SIZE 100
 #define VECTOR_REALLOC_FACTOR 1.6f
 
 // extra
@@ -96,9 +96,9 @@ vec(type) _cat(vec(type), _init)() {\
 #define vec_micro(type) _cat(_vec_micro_, type)
 #define vec_micro_init(type) _cat(vec_micro(type), _init)
 
-#define MICRO_VECTOR(type)\
+#define MICRO_VECTOR_CUSTOM(type, _size)\
 typedef struct _cat(__vec_micro_, type) {\
-    type data[MICRO_VECTOR_SIZE];\
+    type data[_size];\
     size_t size;\
     type (*at)(const struct _cat(_, vec_micro(type))*, size_t);\
     void (*push)(struct _cat(_, vec_micro(type))*, type);\
@@ -112,7 +112,7 @@ type _cat(vec_micro(type), _at)(const vec_micro(type)* v, size_t i) {\
     return v->data[i];\
 }\
 void _cat(vec_micro(type), _push)(vec_micro(type)* v, type e) {\
-    if(v->size == MICRO_VECTOR_SIZE) {\
+    if(v->size == _size) {\
         fprintf(stderr, "vec_micro:push: full vector!\n");\
         abort();\
     }\
@@ -133,6 +133,8 @@ vec_micro(type) _cat(vec_micro(type), _init)() {\
         .pop = _cat(vec_micro(type), _pop)\
     };\
 }
+
+#define MICRO_VECTOR(type) MICRO_VECTOR_CUSTOM(type, MICRO_VECTOR_DEF_SIZE)
 
 // big vector
 #define vec_big(type) _cat(_vec_big_, type)

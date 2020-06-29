@@ -7,10 +7,7 @@
 #include "string.h"
 
 #define STR_MAX_LEN 1024
-
-#define MICRO_VECTOR_SIZE STR_MAX_LEN
-MICRO_VECTOR(char)
-#define MICRO_VECTOR_SIZE 100
+MICRO_VECTOR_CUSTOM(char, STR_MAX_LEN)
 
 #define str_init vec_micro_init(char)
 
