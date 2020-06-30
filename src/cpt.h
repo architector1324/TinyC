@@ -3,6 +3,7 @@
 
 #include <gmp.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
 
 #include "vec.h"
@@ -12,14 +13,22 @@
 #define CPT_RSA_MAX_MSG_LEN 1024
 MICRO_VECTOR_CUSTOM(uint8_t, CPT_RSA_MAX_MSG_LEN)
 
-ARRAY(uint8_t, 256)
 ARRAY(uint8_t, 512)
-TUPLE(arr(uint8_t, 256), arr(uint8_t, 512))
+TUPLE(arr(uint8_t, 512), arr(uint8_t, 512))
+
+
+/////////////////////////////////
+//            HASH             //
+/////////////////////////////////
+
+// sha256
+
+// md5
 
 /////////////////////////////////
 //             RSA             //
 /////////////////////////////////
-tup(arr(uint8_t, 256), arr(uint8_t, 512)) cpt_gen_keys() {
+tup(arr(uint8_t, 512), arr(uint8_t, 512)) cpt_gen_keys() {
     // generate random primes p, q
     mpz_t p, q;
     gmp_randstate_t rand;
@@ -61,12 +70,13 @@ tup(arr(uint8_t, 256), arr(uint8_t, 512)) cpt_gen_keys() {
     // gmp_printf("d=%Zd\n", d);
 
     // encode keys: pub = {e,n}, priv = {d,n}
-    arr(uint8_t, 256) pub = arr_init(uint8_t, 256)();
-    mpz_export(pub.data, NULL, sizeof(uint8_t), 1, 0, 0, n);
+    arr(uint8_t, 512) pub = arr_init(uint8_t, 512)();
+    mpz_export(pub.data, NULL, -1, sizeof(uint8_t), 1, 0, e);
+    mpz_export(pub.data + 256, NULL, -1, sizeof(uint8_t), 1, 0, n);
 
     arr(uint8_t, 512) priv = arr_init(uint8_t, 512)();
-    mpz_export(priv.data, NULL, sizeof(uint8_t), 1, 0, 0, d);
-    memcpy(priv.data + 256, pub.data, 256);
+    mpz_export(priv.data, NULL, -1, sizeof(uint8_t), 1, 0, d);
+    mpz_export(priv.data + 256, NULL, -1, sizeof(uint8_t), 1, 0, n);
 
     // free
     mpz_clear(d);
@@ -79,37 +89,41 @@ tup(arr(uint8_t, 256), arr(uint8_t, 512)) cpt_gen_keys() {
     mpz_clear(q);
     gmp_randclear(rand);
 
-    return (tup(arr(uint8_t, 256), arr(uint8_t, 512))){pub, priv};
+    return (tup(arr(uint8_t, 512), arr(uint8_t, 512))){pub, priv};
 }
 
-vec_micro(uint8_t) cpt_rsa_encrypt(const vec_micro(uint8_t)* data, const arr(uint8_t, 256)* pub) {
+vec_micro(uint8_t) cpt_rsa_encrypt(const vec_micro(uint8_t)* data, const arr(uint8_t, 512)* pub) {
     // convert msg to m and pub key to n
-    mpz_t m, n;
+    mpz_t m, e, n;
     mpz_init(m);
+    mpz_init(e);
     mpz_init(n);
 
-    mpz_import(m, data->size, 1, sizeof(uint8_t), 0, 0, data->data);
-    mpz_import(n, 256, 1, sizeof(uint8_t), 0, 0, pub->data);
+    mpz_import(m, data->size, -1, sizeof(uint8_t), 1, 0, data->data);
+    mpz_import(e, 256, -1, sizeof(uint8_t), 1, 0, pub->data);
+    mpz_import(n, 256, -1, sizeof(uint8_t), 1, 0, pub->data + 256);
 
     // gmp_printf("m=%Zd\n", m);
+    // gmp_printf("e=%Zd\n", e);
     // gmp_printf("n=%Zd\n", n);
 
     // encrypt msg
     mpz_t c;
     mpz_init(c);
-    mpz_powm_ui(c, m, 65537, n);
+    mpz_powm(c, m, e, n);
     // gmp_printf("c=%Zd\n", c);
 
     // encode data
     vec_micro(uint8_t) res = vec_micro_init(uint8_t)();
-    size_t size =  mpz_sizeinbase(c, 2) / 8;
+    size_t size;
 
-    mpz_export(res.data, NULL, sizeof(uint8_t), 1, 0, 0, c);
+    mpz_export(res.data, &size, -1, sizeof(uint8_t), 1, 0, c);
     res.size = size;
 
     // free
     mpz_clear(c);
     mpz_clear(n);
+    mpz_clear(e);
     mpz_clear(m);
 
     return res;
@@ -122,9 +136,9 @@ vec_micro(uint8_t) cpt_rsa_decrypt(const vec_micro(uint8_t)* data, const arr(uin
     mpz_init(n);
     mpz_init(c);
 
-    mpz_import(d, 256, 1, sizeof(uint8_t), 0, 0, priv->data);
-    mpz_import(n, 256, 1, sizeof(uint8_t), 0, 0, priv->data + 256);
-    mpz_import(c, data->size, 1, sizeof(uint8_t), 0, 0, data->data);
+    mpz_import(d, 256, -1, sizeof(uint8_t), 1, 0, priv->data);
+    mpz_import(n, 256, -1, sizeof(uint8_t), 1, 0, priv->data + 256);
+    mpz_import(c, data->size, -1, sizeof(uint8_t), 1, 0, data->data);
 
     // gmp_printf("d=%Zd\n", d);
     // gmp_printf("n=%Zd\n", n);
@@ -140,7 +154,7 @@ vec_micro(uint8_t) cpt_rsa_decrypt(const vec_micro(uint8_t)* data, const arr(uin
     vec_micro(uint8_t) res = vec_micro_init(uint8_t)();
     size_t count =  mpz_sizeinbase(m, 2) / 8;
 
-    mpz_export(res.data, NULL, sizeof(uint8_t), 1, 0, 0, m);
+    mpz_export(res.data, NULL, -1, sizeof(uint8_t), 1, 0, m);
     res.size = count;
 
     // free
@@ -150,6 +164,27 @@ vec_micro(uint8_t) cpt_rsa_decrypt(const vec_micro(uint8_t)* data, const arr(uin
     mpz_clear(d);
 
     return res;
+}
+
+/////////////////////////////////
+//        DIGITAL SIGN         //
+/////////////////////////////////
+ARRAY(uint8_t, 256)
+
+arr(uint8_t, 256) cpt_sign(const vec_micro(uint8_t)* data, const arr(uint8_t, 512)* priv) {
+    vec_micro(uint8_t) sign = cpt_rsa_encrypt(data, priv);
+
+    arr(uint8_t, 256) res = arr_init(uint8_t, 256)();
+    memcpy(res.data, sign.data, 256);
+
+    return res;
+}
+
+bool cpt_sign_verify(const vec_micro(uint8_t)* data, const arr(uint8_t, 256)* sign, const arr(uint8_t, 512)* pub) {
+    vec_micro(uint8_t) _sign = vec_micro_from(uint8_t)(sign->data, 256);
+    vec_micro(uint8_t) tmp = cpt_rsa_decrypt(&_sign, pub);
+    
+    return !memcmp(data->data, tmp.data, data->size);
 }
 
 #endif

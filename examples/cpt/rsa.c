@@ -3,8 +3,9 @@
 
 int main() {
     // generate keys
-    tup(arr(uint8_t, 256), arr(uint8_t, 512)) keys = cpt_gen_keys();
+    tup(arr(uint8_t, 512), arr(uint8_t, 512)) keys = cpt_gen_keys();
 
+    // encrypt and decrypt msg
     vec_micro(uint8_t) msg = vec_micro_from(uint8_t)("Hello, World!", 13);
     vec_micro(uint8_t) encrypted = cpt_rsa_encrypt(&msg, &keys.t0);
 

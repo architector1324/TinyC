@@ -9,7 +9,7 @@
 #define _cat(X, Y) __cat(X, Y)
 
 // array
-#define arr(type, size) _cat(_cat(_arr_, size), _cat(_, size))
+#define arr(type, size) _cat(_cat(_arr_, type), _cat(_, size))
 #define arr_init(type, size) _cat(arr(type, size), _init)
 
 #define arr_set(a, i, e) a.set(&a, i, e)
