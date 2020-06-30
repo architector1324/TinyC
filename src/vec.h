@@ -18,6 +18,7 @@
 // vector
 #define vec(type) _cat(_vec_, type)
 #define vec_init(type) _cat(vec(type), _init)
+#define vec_from(type) _cat(vec(type), _from)
 
 #define vec_at(v, i) v.at(&v, i)
 #define vec_push(v, e) v.push(&v, e)
@@ -90,11 +91,18 @@ vec(type) _cat(vec(type), _init)() {\
         .reserve = _cat(vec(type), _reserve),\
         .free = _cat(vec(type), _free)\
     };\
+}\
+vec(type) _cat(vec(type), _from)(const type* a, size_t size) {\
+    vec(type) res = vec_init(type)();\
+    memcpy(res.data, a, size);\
+    res.size = size;\
+    return res;\
 }
 
 // micro vector
 #define vec_micro(type) _cat(_vec_micro_, type)
 #define vec_micro_init(type) _cat(vec_micro(type), _init)
+#define vec_micro_from(type) _cat(vec_micro(type), _from)
 
 #define MICRO_VECTOR_CUSTOM(type, _size)\
 typedef struct _cat(__vec_micro_, type) {\
@@ -132,6 +140,12 @@ vec_micro(type) _cat(vec_micro(type), _init)() {\
         .push = _cat(vec_micro(type), _push),\
         .pop = _cat(vec_micro(type), _pop)\
     };\
+}\
+vec_micro(type) _cat(vec_micro(type), _from)(const type* a, size_t size) {\
+    vec_micro(type) res = vec_micro_init(type)();\
+    memcpy(res.data, a, size);\
+    res.size = size;\
+    return res;\
 }
 
 #define MICRO_VECTOR(type) MICRO_VECTOR_CUSTOM(type, MICRO_VECTOR_DEF_SIZE)
