@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "vec.h"
 
+SLICE(float)
 MICRO_VECTOR(float)
 
 int main() {

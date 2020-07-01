@@ -2,6 +2,7 @@
 #define VEC
 
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 
 // settings
@@ -13,7 +14,33 @@
 
 // extra
 #define __cat(X, Y) X##Y
-#define _cat(X, Y) __cat(X, Y) 
+#define _cat(X, Y) __cat(X, Y)
+
+// slice
+#define slc(type) _cat(_slc_, type)
+#define slc_mut(type) _cat(_slc_mut_, type)
+
+#define slc_from(type) _cat(slc(type), _from)
+#define slc_from_mut(type) _cat(slc_mut(type), _from)
+
+#define to_slc(cnt) cnt.slice(&cnt)
+#define to_slc_mut(cnt) cnt.slice_mut(&cnt)
+
+#define SLICE(type)\
+typedef struct _cat(_, slc(type)) {\
+    const type* data;\
+    size_t size;\
+} slc(type);\
+typedef struct _cat(_, slc_mut(type)) {\
+    type* data;\
+    size_t size;\
+} slc_mut(type);\
+slc(type) _cat(slc(type), _from)(const type* data, size_t size) {\
+    return (slc(type)){data, size};\
+}\
+slc_mut(type) _cat(slc_mut(type), _from)(type* data, size_t size) {\
+    return (slc_mut(type)){data, size};\
+}
 
 // vector
 #define vec(type) _cat(_vec_, type)
@@ -31,12 +58,26 @@ typedef struct _cat(_, vec(type)) {\
     type* data;\
     size_t size;\
     size_t cap;\
+    slc(type) (*slice)(const struct _cat(_, vec(type))*);\
+    slc_mut(type) (*slice_mut)(struct _cat(_, vec(type))*);\
     type (*at)(const struct _cat(_, vec(type))*, size_t);\
     void (*push)(struct _cat(_, vec(type))*, type);\
     type (*pop)(struct _cat(_, vec(type))*);\
     void (*reserve)(struct _cat(_, vec(type))*, size_t);\
     void (*free)(struct _cat(_, vec(type))*);\
 } vec(type);\
+slc(type) _cat(vec(type), _slice)(const vec(type)* v) {\
+    return (slc(type)){\
+        .data = v->data,\
+        .size = v->size,\
+    };\
+}\
+slc_mut(type) _cat(vec(type), _slice_mut)(vec(type)* v) {\
+    return (slc_mut(type)){\
+        .data = v->data,\
+        .size = v->size,\
+    };\
+}\
 type _cat(vec(type), _at)(const vec(type)* v, size_t i) {\
     if(i >= v->size) {\
         fprintf(stderr, "vec:at: index out of bounds!\n");\
@@ -73,6 +114,8 @@ void _cat(vec(type), _free)(vec(type)* v) {\
     v->size = 0;\
     v->cap = 0;\
     free(v->data);\
+    v->slice = NULL;\
+    v->slice_mut = NULL;\
     v->data = NULL;\
     v->at = NULL;\
     v->push = NULL;\
@@ -85,6 +128,8 @@ vec(type) _cat(vec(type), _init)() {\
         .data = malloc(2 * sizeof(type)),\
         .size = 0,\
         .cap = 2,\
+        .slice = _cat(vec(type), _slice),\
+        .slice_mut = _cat(vec(type), _slice_mut),\
         .at = _cat(vec(type), _at),\
         .push = _cat(vec(type), _push),\
         .pop = _cat(vec(type), _pop),\
@@ -92,10 +137,10 @@ vec(type) _cat(vec(type), _init)() {\
         .free = _cat(vec(type), _free)\
     };\
 }\
-vec(type) _cat(vec(type), _from)(const type* a, size_t size) {\
+vec(type) _cat(vec(type), _from)(slc(type) a) {\
     vec(type) res = vec_init(type)();\
-    memcpy(res.data, a, size);\
-    res.size = size;\
+    memcpy(res.data, a.data, a.size);\
+    res.size = a.size;\
     return res;\
 }
 
@@ -108,10 +153,24 @@ vec(type) _cat(vec(type), _from)(const type* a, size_t size) {\
 typedef struct _cat(__vec_micro_, type) {\
     type data[_size];\
     size_t size;\
+    slc(type) (*slice)(const struct _cat(_, vec_micro(type))*);\
+    slc_mut(type) (*slice_mut)(struct _cat(_, vec_micro(type))*);\
     type (*at)(const struct _cat(_, vec_micro(type))*, size_t);\
     void (*push)(struct _cat(_, vec_micro(type))*, type);\
     type (*pop)(struct _cat(_, vec_micro(type))*);\
 } vec_micro(type);\
+slc(type) _cat(vec_micro(type), _slice)(const vec_micro(type)* v) {\
+    return (slc(type)){\
+        .data = v->data,\
+        .size = v->size,\
+    };\
+}\
+slc_mut(type) _cat(vec_micro(type), _slice_mut)(vec_micro(type)* v) {\
+    return (slc_mut(type)){\
+        .data = v->data,\
+        .size = v->size,\
+    };\
+}\
 type _cat(vec_micro(type), _at)(const vec_micro(type)* v, size_t i) {\
     if(i >= v->size) {\
         fprintf(stderr, "vec_micro:at: index out of bounds!\n");\
@@ -136,6 +195,8 @@ type _cat(vec_micro(type), _pop)(vec_micro(type)* v) {\
 vec_micro(type) _cat(vec_micro(type), _init)() {\
     return (vec_micro(type)) {\
         .size = 0,\
+        .slice = _cat(vec_micro(type), _slice),\
+        .slice_mut = _cat(vec_micro(type), _slice_mut),\
         .at = _cat(vec_micro(type), _at),\
         .push = _cat(vec_micro(type), _push),\
         .pop = _cat(vec_micro(type), _pop)\

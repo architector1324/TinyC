@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "arr.h"
 
+SLICE(float)
 ARRAY(float, 32)
 
 int main() {

@@ -4,6 +4,7 @@
 #include "vec.h"
 
 REFERENCE(float)
+SLICE(ref(float))
 VECTOR(ref(float))
 
 int main() {

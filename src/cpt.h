@@ -11,6 +11,7 @@
 #include "arr.h"
 
 #define CPT_RSA_MAX_MSG_LEN 1024
+SLICE(uint8_t)
 MICRO_VECTOR_CUSTOM(uint8_t, CPT_RSA_MAX_MSG_LEN)
 
 ARRAY(uint8_t, 512)
@@ -92,14 +93,14 @@ tup(arr(uint8_t, 512), arr(uint8_t, 512)) cpt_gen_keys() {
     return (tup(arr(uint8_t, 512), arr(uint8_t, 512))){pub, priv};
 }
 
-vec_micro(uint8_t) cpt_rsa_encrypt(const vec_micro(uint8_t)* data, const arr(uint8_t, 512)* pub) {
+vec_micro(uint8_t) cpt_rsa_encrypt(slc(uint8_t) data, const arr(uint8_t, 512)* pub) {
     // convert msg to m and pub key to n
     mpz_t m, e, n;
     mpz_init(m);
     mpz_init(e);
     mpz_init(n);
 
-    mpz_import(m, data->size, -1, sizeof(uint8_t), 1, 0, data->data);
+    mpz_import(m, data.size, -1, sizeof(uint8_t), 1, 0, data.data);
     mpz_import(e, 256, -1, sizeof(uint8_t), 1, 0, pub->data);
     mpz_import(n, 256, -1, sizeof(uint8_t), 1, 0, pub->data + 256);
 
@@ -129,7 +130,7 @@ vec_micro(uint8_t) cpt_rsa_encrypt(const vec_micro(uint8_t)* data, const arr(uin
     return res;
 }
 
-vec_micro(uint8_t) cpt_rsa_decrypt(const vec_micro(uint8_t)* data, const arr(uint8_t, 512)* priv) {
+vec_micro(uint8_t) cpt_rsa_decrypt(slc(uint8_t) data, const arr(uint8_t, 512)* priv) {
     // convert priv to {d,n} and data to c
     mpz_t d, n, c;
     mpz_init(d);
@@ -138,7 +139,7 @@ vec_micro(uint8_t) cpt_rsa_decrypt(const vec_micro(uint8_t)* data, const arr(uin
 
     mpz_import(d, 256, -1, sizeof(uint8_t), 1, 0, priv->data);
     mpz_import(n, 256, -1, sizeof(uint8_t), 1, 0, priv->data + 256);
-    mpz_import(c, data->size, -1, sizeof(uint8_t), 1, 0, data->data);
+    mpz_import(c, data.size, -1, sizeof(uint8_t), 1, 0, data.data);
 
     // gmp_printf("d=%Zd\n", d);
     // gmp_printf("n=%Zd\n", n);
@@ -171,7 +172,7 @@ vec_micro(uint8_t) cpt_rsa_decrypt(const vec_micro(uint8_t)* data, const arr(uin
 /////////////////////////////////
 ARRAY(uint8_t, 256)
 
-arr(uint8_t, 256) cpt_sign(const vec_micro(uint8_t)* data, const arr(uint8_t, 512)* priv) {
+arr(uint8_t, 256) cpt_sign(slc(uint8_t) data, const arr(uint8_t, 512)* priv) {
     vec_micro(uint8_t) sign = cpt_rsa_encrypt(data, priv);
 
     arr(uint8_t, 256) res = arr_init(uint8_t, 256)();
@@ -180,11 +181,10 @@ arr(uint8_t, 256) cpt_sign(const vec_micro(uint8_t)* data, const arr(uint8_t, 51
     return res;
 }
 
-bool cpt_sign_verify(const vec_micro(uint8_t)* data, const arr(uint8_t, 256)* sign, const arr(uint8_t, 512)* pub) {
-    vec_micro(uint8_t) _sign = vec_micro_from(uint8_t)(sign->data, 256);
-    vec_micro(uint8_t) tmp = cpt_rsa_decrypt(&_sign, pub);
+bool cpt_sign_verify(slc(uint8_t) data, const arr(uint8_t, 256)* sign, const arr(uint8_t, 512)* pub) {
+    vec_micro(uint8_t) tmp = cpt_rsa_decrypt(sign->slice(sign), pub);
     
-    return !memcmp(data->data, tmp.data, data->size);
+    return !memcmp(data.data, tmp.data, data.size);
 }
 
 #endif

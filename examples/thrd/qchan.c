@@ -16,7 +16,7 @@ void* foo() {
 int main() {
     ch = thrd_qchan_init(float)();
 
-    thrd(foo_t) th;
+    thrd(foo_t) th = thrd_init(foo_t)();
     thrd_create(foo_t, th, foo);
 
     sleep(2);

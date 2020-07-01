@@ -62,7 +62,6 @@
 #define thrd_args(name) _cat(_thrd_args_, name)
 #define thrd_init(name) _cat(thrd(name), _init)
 #define thrd_create(name, th, f, args...) _cat(thrd(name), _create)(&th, f, (thrd_args(name)){args})
-#define thrd_call(name, args...) name(&(thrd_args(name)){args})
 
 #define thrd_join(th) th.join(&th)
 
@@ -88,11 +87,15 @@ type _cat(thrd(name), _join)(thrd(name)* th){\
     pthread_join(th->th, NULL);\
     return th->res;\
 }\
+thrd(name) _cat(thrd(name), _init)() {\
+    return (thrd(name)) {\
+        .join = _cat(thrd(name), _join)\
+    };\
+}\
 bool _cat(thrd(name), _create)(thrd(name)* th, type (*f)(_type_decl_comma(args)), thrd_args(name) arg){\
     if(!th->run) {\
         th->run = true;\
         th->arg = arg;\
-        th->join = _cat(thrd(name), _join);\
         th->f = f;\
         pthread_create(&th->th, NULL, _cat(thrd(name), _bootstrap), th);\
         return true;\
@@ -242,6 +245,7 @@ thrd_chan(type) _cat(thrd_chan(type), _init)() {\
 #define thrd_qchan_free(ch) ch.free(&ch)
 
 #define QCHAN(type)\
+SLICE(type)\
 VECTOR(type)\
 MUTEX(vec(type))\
 typedef struct _cat(__thrd_qchan_, type) {\
