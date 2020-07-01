@@ -23,8 +23,22 @@ TUPLE(arr(uint8_t, 512), arr(uint8_t, 512))
 /////////////////////////////////
 
 // sha256
+ARRAY(uint8_t, 32)
+
+arr(uint8_t, 32) cpt_sha256(slc(uint8_t) data) {
+    arr(uint8_t, 32) res = arr_init(uint8_t, 32)();
+
+    return res;
+}
 
 // md5
+ARRAY(uint8_t, 16)
+
+arr(uint8_t, 16) cpt_md5(slc(uint8_t) data) {
+    arr(uint8_t, 16) res = arr_init(uint8_t, 16)();
+
+    return res;
+}
 
 /////////////////////////////////
 //             RSA             //

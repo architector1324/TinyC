@@ -60,7 +60,6 @@
 // base
 #define thrd(name) _cat(_thrd_, name)
 #define thrd_args(name) _cat(_thrd_args_, name)
-#define thrd_init(name) _cat(thrd(name), _init)
 #define thrd_create(name, th, f, args...) _cat(thrd(name), _create)(&th, f, (thrd_args(name)){args})
 
 #define thrd_join(th) th.join(&th)
@@ -93,10 +92,12 @@ thrd(name) _cat(thrd(name), _init)() {\
     };\
 }\
 bool _cat(thrd(name), _create)(thrd(name)* th, type (*f)(_type_decl_comma(args)), thrd_args(name) arg){\
+    *th = (thrd(name)){};\
     if(!th->run) {\
         th->run = true;\
         th->arg = arg;\
         th->f = f;\
+        th->join = _cat(thrd(name), _join);\
         pthread_create(&th->th, NULL, _cat(thrd(name), _bootstrap), th);\
         return true;\
     }\

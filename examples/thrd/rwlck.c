@@ -25,11 +25,11 @@ void* bar(size_t i) {
 int main() {
     shared = thrd_rwlck_init(float)(1.6f);
     
-    thrd(foo_t) rd[2] = {thrd_init(foo_t)(), thrd_init(foo_t)()};
+    thrd(foo_t) rd[2];
     thrd_create(foo_t, rd[0], foo, 1);
     thrd_create(foo_t, rd[1], foo, 2);
 
-    thrd(foo_t) wr[2] = {thrd_init(foo_t)(), thrd_init(foo_t)()};
+    thrd(foo_t) wr[2];
     thrd_create(foo_t, wr[0], bar, 1);
     thrd_create(foo_t, wr[1], bar, 2);
 
