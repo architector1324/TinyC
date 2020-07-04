@@ -12,6 +12,7 @@
 
 #define CPT_RSA_MAX_MSG_LEN 1024
 SLICE(uint8_t)
+CHAIN(uint8_t)
 MICRO_VECTOR_CUSTOM(uint8_t, CPT_RSA_MAX_MSG_LEN)
 
 ARRAY(uint8_t, 512)
@@ -28,31 +29,107 @@ ARRAY(uint8_t, 32)
 arr(uint8_t, 32) cpt_sha256(slc(uint8_t) data) {
     arr(uint8_t, 32) res = arr_init(uint8_t, 32)();
 
+    #define rotr(x, n) (x >> n % 32) | (x << (32-n) % 32)
+    #define htonll(x) ((((uint64_t)htonl(x)) << 32) + htonl((x) >> 32))
+
     // init
-    uint32_t h[8] = {
-        0x6A09E667,
-        0xBB67AE85,
-        0x3C6EF372,
-        0xA54FF53A,
-        0x510E527F,
-        0x9B05688C,
-        0x1F83D9AB,
-        0x5BE0CD19
+    static uint32_t h[8] = {
+        0x6a09e667,
+        0xbb67ae85,
+        0x3c6ef372,
+        0xa54ff53a,
+        0x510e527f,
+        0x9b05688c,
+        0x1f83d9ab,
+        0x5be0cd19
     };
 
-    uint32_t k[64] = {
-        0x428A2F98, 0x71374491, 0xB5C0FBCF, 0xE9B5DBA5, 0x3956C25B, 0x59F111F1, 0x923F82A4, 0xAB1C5ED5,
-        0xD807AA98, 0x12835B01, 0x243185BE, 0x550C7DC3, 0x72BE5D74, 0x80DEB1FE, 0x9BDC06A7, 0xC19BF174,
-        0xE49B69C1, 0xEFBE4786, 0x0FC19DC6, 0x240CA1CC, 0x2DE92C6F, 0x4A7484AA, 0x5CB0A9DC, 0x76F988DA,
-        0x983E5152, 0xA831C66D, 0xB00327C8, 0xBF597FC7, 0xC6E00BF3, 0xD5A79147, 0x06CA6351, 0x14292967,
-        0x27B70A85, 0x2E1B2138, 0x4D2C6DFC, 0x53380D13, 0x650A7354, 0x766A0ABB, 0x81C2C92E, 0x92722C85,
-        0xA2BFE8A1, 0xA81A664B, 0xC24B8B70, 0xC76C51A3, 0xD192E819, 0xD6990624, 0xF40E3585, 0x106AA070,
-        0x19A4C116, 0x1E376C08, 0x2748774C, 0x34B0BCB5, 0x391C0CB3, 0x4ED8AA4A, 0x5B9CCA4F, 0x682E6FF3,
-        0x748F82EE, 0x78A5636F, 0x84C87814, 0x8CC70208, 0x90BEFFFA, 0xA4506CEB, 0xBEF9A3F7, 0xC67178F2
+    static uint32_t k[64] = {
+        0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+        0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+        0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+        0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+        0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+        0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+        0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+        0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
     };
 
     // prepare msg
+    chn(uint8_t) m = chn_init(uint8_t)();
 
+    uint8_t single_bit = 128;
+    chn_chain(m, data);
+    chn_chain(m, slc_from(uint8_t)(&single_bit, 1));
+
+    size_t k0 = 0;
+    while((8 * data.size + 1 + k0) % 512 != 448) k0++;
+
+    vec_micro(uint8_t) zeros = vec_micro_init(uint8_t)();
+    zeros.size = (k0 - 7) / 8;
+    chn_chain(m, to_slc(zeros));
+
+    uint64_t len = htonll(8 * data.size);
+    chn_chain(m, slc_from(uint8_t)((uint8_t*)&len, 8));
+
+    if(m.size % 64 != 0) {
+        vec_micro(uint8_t) zeros2 = vec_micro_init(uint8_t)();
+        zeros2.size = 64 - m.size % 64;
+        chn_chain(m, to_slc(zeros2));
+    }
+
+    // process 512-bit blocks
+    for(size_t i = 0; i < m.size / 64; i++) {
+        uint32_t block[64];
+        for(size_t j = 0; j < 64; j++){
+            uint8_t _b = chn_at(m, j + i * 64);
+            memcpy((uint8_t*)block + j, &_b, 1);
+        }
+
+        for(size_t j = 16; j < 64; j++) {
+            uint32_t s0 = rotr(block[j - 15], 7) ^ rotr(block[j - 15], 18) ^ (block[j - 15] >> 3);
+            uint32_t s1 = rotr(block[j - 2], 17) ^ rotr(block[j - 2], 19) ^ (block[j - 2] >> 10);
+            block[j] = block[j - 16] + s0 + block[j - 7] + s1;
+        }
+
+        // extra vars
+        uint32_t a = h[0];
+        uint32_t b = h[1];
+        uint32_t c = h[2];
+        uint32_t d = h[3];
+        uint32_t e = h[4];
+        uint32_t f = h[5];
+        uint32_t g = h[6];
+        uint32_t _h = h[7];
+
+        // work
+        for(size_t j = 0; j < 64; j++) {
+            uint32_t sig0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22);
+            uint32_t Ma = (a & b) ^ (a & c) ^ (b & c);
+            uint32_t t2 = sig0 + Ma;
+            uint32_t sig1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25);
+            uint32_t Ch = (e & f) ^ ((~e) & g);
+            uint32_t t1 = _h + sig1 + Ch + k[j] + block[j];
+
+            _h = g;
+            g = f;
+            f = e;
+            e = d + t1;
+            d = c;
+            c = b;
+            b = a;
+            a = t1 + t1;
+        }
+
+        h[0] += a;
+        h[1] += b;
+        h[2] += c;
+        h[3] += d;
+        h[4] += e;
+        h[5] += f;
+        h[6] += g;
+        h[7] += _h;
+    }
 
     // copy to out buffer
     memcpy(res.data, h, 32);
@@ -216,9 +293,9 @@ arr(uint8_t, 256) cpt_sign(slc(uint8_t) data, const arr(uint8_t, 512)* priv) {
 }
 
 bool cpt_sign_verify(slc(uint8_t) data, const arr(uint8_t, 256)* sign, const arr(uint8_t, 512)* pub) {
-    vec_micro(uint8_t) tmp = cpt_rsa_decrypt(sign->slice(sign), pub);
+    vec_micro(uint8_t) dec = cpt_rsa_decrypt(sign->slice(sign), pub);
     
-    return !memcmp(data.data, tmp.data, data.size);
+    return !memcmp(data.data, dec.data, data.size);
 }
 
 #endif
