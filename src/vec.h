@@ -139,7 +139,7 @@ vec(type) _cat(vec(type), _init)() {\
 }\
 vec(type) _cat(vec(type), _from)(slc(type) a) {\
     vec(type) res = vec_init(type)();\
-    memcpy(res.data, a.data, a.size);\
+    memcpy(res.data, a.data, sizeof(type) * a.size);\
     res.size = a.size;\
     return res;\
 }
@@ -202,10 +202,10 @@ vec_micro(type) _cat(vec_micro(type), _init)() {\
         .pop = _cat(vec_micro(type), _pop)\
     };\
 }\
-vec_micro(type) _cat(vec_micro(type), _from)(const type* a, size_t size) {\
+vec_micro(type) _cat(vec_micro(type), _from)(slc(type) a) {\
     vec_micro(type) res = vec_micro_init(type)();\
-    memcpy(res.data, a, size);\
-    res.size = size;\
+    memcpy(res.data, a.data, sizeof(type) * a.size);\
+    res.size = a.size;\
     return res;\
 }
 
