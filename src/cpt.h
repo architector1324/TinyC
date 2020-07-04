@@ -23,17 +23,39 @@ TUPLE(arr(uint8_t, 512), arr(uint8_t, 512))
 //            HASH             //
 /////////////////////////////////
 
+#include <byteswap.h>
+
 // sha256
 ARRAY(uint8_t, 32)
+
+uint32_t _htonl(uint32_t v){
+    int num = 42;
+
+    // test endian
+    return (*(uint8_t*)&num == 42) ? __bswap_32(v) : v;
+}
+
+uint64_t _htonll(uint64_t v){
+    int num = 42;
+
+    // test endian
+    return (*(uint8_t*)&num == 42) ? (((uint64_t)__bswap_32(v)) << 32) + __bswap_32(v >> 32) : v;
+}
 
 arr(uint8_t, 32) cpt_sha256(slc(uint8_t) data) {
     arr(uint8_t, 32) res = arr_init(uint8_t, 32)();
 
-    #define rotr(x, n) (x >> n % 32) | (x << (32-n) % 32)
-    #define htonll(x) ((((uint64_t)htonl(x)) << 32) + htonl((x) >> 32))
+    #define shr(x, n) (x >> (n % 32))
+    #define rotr(x, n) (shr(x, n) | (x << 32 - (n % 32)))
+    #define maj(x, y, z) ((x & y) ^ (x & z) ^ (y & z))
+    #define ch(x, y, z) ((x & y) ^ (~x & z))
+    #define sigma0(x) (rotr(x, 2) ^ rotr(x, 13) ^ rotr(x, 22))
+    #define sigma1(x) (rotr(x, 6) ^ rotr(x, 11) ^ rotr(x, 25))
+    #define gamma0(x) (rotr(x, 7) ^ rotr(x, 18) ^ shr(x, 3))
+    #define gamma1(x) (rotr(x, 17) ^ rotr(x, 19) ^ shr(x, 10))
 
     // init
-    static uint32_t h[8] = {
+    uint32_t h[8] = {
         0x6a09e667,
         0xbb67ae85,
         0x3c6ef372,
@@ -62,34 +84,28 @@ arr(uint8_t, 32) cpt_sha256(slc(uint8_t) data) {
     chn_chain(m, data);
     chn_chain(m, slc_from(uint8_t)(&single_bit, 1));
 
-    size_t k0 = 0;
-    while((8 * data.size + 1 + k0) % 512 != 448) k0++;
-
     vec_micro(uint8_t) zeros = vec_micro_init(uint8_t)();
-    zeros.size = (k0 - 7) / 8;
+    zeros.size = (448 - 8 * m.size) / 8;
     chn_chain(m, to_slc(zeros));
 
-    uint64_t len = htonll(8 * data.size);
-    chn_chain(m, slc_from(uint8_t)((uint8_t*)&len, 8));
+    uint64_t len = _htonll(8 * data.size);
 
-    if(m.size % 64 != 0) {
-        vec_micro(uint8_t) zeros2 = vec_micro_init(uint8_t)();
-        zeros2.size = 64 - m.size % 64;
-        chn_chain(m, to_slc(zeros2));
-    }
+    chn_chain(m, slc_from(uint8_t)((uint8_t*)&len, 8));
 
     // process 512-bit blocks
     for(size_t i = 0; i < m.size / 64; i++) {
-        uint32_t block[64];
-        for(size_t j = 0; j < 64; j++){
-            uint8_t _b = chn_at(m, j + i * 64);
-            memcpy((uint8_t*)block + j, &_b, 1);
+        uint32_t block[64] = {0};
+
+        for(size_t j = 0; j < 16; j++) {
+            for(size_t k = 0; k < 4; k++) {
+                uint8_t _b = chn_at(m, k + j * 4 + i * 16);
+                memcpy((uint8_t*)&block[j] + k, &_b, 1);
+            }
+            block[j] = _htonl(block[j]);
         }
 
         for(size_t j = 16; j < 64; j++) {
-            uint32_t s0 = rotr(block[j - 15], 7) ^ rotr(block[j - 15], 18) ^ (block[j - 15] >> 3);
-            uint32_t s1 = rotr(block[j - 2], 17) ^ rotr(block[j - 2], 19) ^ (block[j - 2] >> 10);
-            block[j] = block[j - 16] + s0 + block[j - 7] + s1;
+            block[j] = block[j - 16] + gamma0(block[j - 15]) +  block[j - 7] + gamma1(block[j - 2]);
         }
 
         // extra vars
@@ -104,12 +120,8 @@ arr(uint8_t, 32) cpt_sha256(slc(uint8_t) data) {
 
         // work
         for(size_t j = 0; j < 64; j++) {
-            uint32_t sig0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22);
-            uint32_t Ma = (a & b) ^ (a & c) ^ (b & c);
-            uint32_t t2 = sig0 + Ma;
-            uint32_t sig1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25);
-            uint32_t Ch = (e & f) ^ ((~e) & g);
-            uint32_t t1 = _h + sig1 + Ch + k[j] + block[j];
+            uint32_t t1 = _h + sigma1(e) + ch(e, f, g) + k[j] + block[j];
+            uint32_t t2 = sigma0(a) + maj(a, b, c);
 
             _h = g;
             g = f;
@@ -118,7 +130,7 @@ arr(uint8_t, 32) cpt_sha256(slc(uint8_t) data) {
             d = c;
             c = b;
             b = a;
-            a = t1 + t1;
+            a = t1 + t2;
         }
 
         h[0] += a;
@@ -130,6 +142,8 @@ arr(uint8_t, 32) cpt_sha256(slc(uint8_t) data) {
         h[6] += g;
         h[7] += _h;
     }
+
+    for(size_t i = 0; i < 8; i++) h[i] = _htonl(h[i]);
 
     // copy to out buffer
     memcpy(res.data, h, 32);
@@ -284,7 +298,8 @@ vec_micro(uint8_t) cpt_rsa_decrypt(slc(uint8_t) data, const arr(uint8_t, 512)* p
 ARRAY(uint8_t, 256)
 
 arr(uint8_t, 256) cpt_sign(slc(uint8_t) data, const arr(uint8_t, 512)* priv) {
-    vec_micro(uint8_t) sign = cpt_rsa_encrypt(data, priv);
+    arr(uint8_t, 32) hash = cpt_sha256(data);
+    vec_micro(uint8_t) sign = cpt_rsa_encrypt(to_slc(hash), priv);
 
     arr(uint8_t, 256) res = arr_init(uint8_t, 256)();
     memcpy(res.data, sign.data, 256);
@@ -294,8 +309,9 @@ arr(uint8_t, 256) cpt_sign(slc(uint8_t) data, const arr(uint8_t, 512)* priv) {
 
 bool cpt_sign_verify(slc(uint8_t) data, const arr(uint8_t, 256)* sign, const arr(uint8_t, 512)* pub) {
     vec_micro(uint8_t) dec = cpt_rsa_decrypt(sign->slice(sign), pub);
-    
-    return !memcmp(data.data, dec.data, data.size);
+    arr(uint8_t, 32) hash = cpt_sha256(data);
+
+    return !memcmp(hash.data, dec.data, 32);
 }
 
 #endif
