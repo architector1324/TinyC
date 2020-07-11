@@ -1,2 +1,2 @@
 # TinyC
-Tiny collection of my C11 one-header libraries.
+Tiny collection of my tiny C libraries.

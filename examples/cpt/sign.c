@@ -6,7 +6,7 @@ int main() {
     tup(arr(uint8_t, 512), arr(uint8_t, 512)) keys = cpt_gen_keys();
 
     // sign msg and verify
-    const uint8_t* msg = "Hello, World!";
+    const uint8_t msg[] = "Hello, World!";
     arr(uint8_t, 256) sign = cpt_sign(slc_from(uint8_t)(msg, 13), &keys.t1);
 
     printf("msg=%s\nsign=", msg);

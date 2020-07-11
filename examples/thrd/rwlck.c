@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <unistd.h>
 #include "thrd.h"
 
 RWLOCK(float)

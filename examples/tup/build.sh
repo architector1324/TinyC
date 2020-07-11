@@ -1,5 +1,5 @@
 #!/bin/bash
 
 cp ../../src/tup.h ./
-gcc -O2 main.c
+gcc -O2 -Wall main.c
 rm ./tup.h

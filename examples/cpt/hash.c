@@ -2,7 +2,7 @@
 #include "cpt.h"
 
 int main() {
-    const char msg[] = "Hello, World!";
+    const uint8_t msg[] = "Hello, World!";
     arr(uint8_t, 32) sha256 = cpt_sha256(slc_from(uint8_t)(msg, sizeof(msg) - 1));
 
     // print

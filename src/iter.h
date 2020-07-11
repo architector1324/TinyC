@@ -48,12 +48,11 @@ iter(type) iter_init(type)(type e) {\
 tup(type, bool) _cat(iter(type), _next)(iter(type)* it)
 
 #define iter_foreach(type, it, v, body) {\
-    tup(type, bool) tmp;\
     type v;\
     while(!it.end) {\
         v = it.last;\
         body;\
-        tmp = iter_next(it);\
+        iter_next(it);\
     }\
 }
 

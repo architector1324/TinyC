@@ -21,7 +21,7 @@ str str_cat(str s0, const str s1) {
 }
 
 str str_cat_from(str s0, const char* s1) {
-    strncpy(s0.data + s0.size, s1, STR_MAX_LEN - s0.size);
+    strncpy(s0.data + s0.size, s1, STR_MAX_LEN - s0.size - 1);
     s0.size += strnlen(s1, STR_MAX_LEN - s0.size);
     return s0;
 }

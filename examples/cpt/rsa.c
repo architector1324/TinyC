@@ -6,7 +6,7 @@ int main() {
     tup(arr(uint8_t, 512), arr(uint8_t, 512)) keys = cpt_gen_keys();
 
     // encrypt and decrypt msg
-    const uint8_t* msg = "Hello, World!";
+    const uint8_t msg[] = "Hello, World!";
     vec_micro(uint8_t) encrypted = cpt_rsa_encrypt(slc_from(uint8_t)(msg, 13), &keys.t0);
 
     printf("msg=%s\nencrypted=", msg);

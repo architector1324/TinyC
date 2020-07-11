@@ -10,10 +10,9 @@
 #include "tup.h"
 #include "arr.h"
 
-#define CPT_RSA_MAX_MSG_LEN 1024
 SLICE(uint8_t)
 CHAIN(uint8_t)
-MICRO_VECTOR_CUSTOM(uint8_t, CPT_RSA_MAX_MSG_LEN)
+MICRO_VECTOR_CUSTOM(uint8_t, 2048)
 
 ARRAY(uint8_t, 512)
 TUPLE(arr(uint8_t, 512), arr(uint8_t, 512))
@@ -46,7 +45,7 @@ arr(uint8_t, 32) cpt_sha256(slc(uint8_t) data) {
     arr(uint8_t, 32) res = arr_init(uint8_t, 32)();
 
     #define shr(x, n) (x >> (n % 32))
-    #define rotr(x, n) (shr(x, n) | (x << 32 - (n % 32)))
+    #define rotr(x, n) (shr(x, n) | (x << (32 - (n % 32))))
     #define maj(x, y, z) ((x & y) ^ (x & z) ^ (y & z))
     #define ch(x, y, z) ((x & y) ^ (~x & z))
     #define sigma0(x) (rotr(x, 2) ^ rotr(x, 13) ^ rotr(x, 22))
