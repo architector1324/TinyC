@@ -84,7 +84,7 @@ arr(uint8_t, 32) cpt_sha256(slc(uint8_t) data) {
     chn_chain(m, slc_from(uint8_t)(&single_bit, 1));
 
     vec_micro(uint8_t) zeros = vec_micro_init(uint8_t)();
-    zeros.size = (448 - 8 * m.size) / 8;
+    zeros.size = (448 - (8 * m.size) % 448) / 8;
     chn_chain(m, to_slc(zeros));
 
     uint64_t len = _htonll(8 * data.size);
