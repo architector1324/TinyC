@@ -18,8 +18,8 @@ void* foo() {
 int main() {
     shared = thrd_mtx_init(float)(1.6f);
  
-    thrd(foo_t) th0;
-    thrd(foo_t) th1;
+    thrd(foo_t) th0 = thrd_init(foo_t)(0);
+    thrd(foo_t) th1 = thrd_init(foo_t)(0);
 
     thrd_create(foo_t, th0, foo);
     thrd_create(foo_t, th1, foo);

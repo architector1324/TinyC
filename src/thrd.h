@@ -6,6 +6,9 @@
 
 #include "vec.h"
 
+// settings
+#define THRD_DEF_STACK 8 * 1024 // 8Kb
+
 // extra
 // ... -> count(...) [max 6]
 #define _foreach_counter(_0, _1, _2, _3, _4, _5, _6, x, ...) x
@@ -59,6 +62,8 @@
 
 // base
 #define thrd(name) _cat(_thrd_, name)
+
+#define thrd_init(name) _cat(thrd(name), _init)
 #define thrd_args(name) _cat(_thrd_args_, name)
 #define thrd_create(name, th, f, args...) _cat(thrd(name), _create)(&th, f, (thrd_args(name)){args})
 
@@ -69,7 +74,9 @@ typedef struct _cat(__thrd_args_, name) {\
     _type_decl(args)\
 } thrd_args(name);\
 typedef struct _cat(__thrd_, name) {\
-    pthread_t th;\
+    pthread_t _th;\
+    pthread_attr_t _attr;\
+    size_t stack;\
     thrd_args(name) arg;\
     type res;\
     bool run;\
@@ -83,22 +90,26 @@ void* _cat(thrd(name), _bootstrap)(void* raw) {\
     return th;\
 }\
 type _cat(thrd(name), _join)(thrd(name)* th){\
-    pthread_join(th->th, NULL);\
+    pthread_join(th->_th, NULL);\
+    pthread_attr_destroy(&th->_attr);\
     return th->res;\
 }\
-thrd(name) _cat(thrd(name), _init)() {\
-    return (thrd(name)) {\
+thrd(name) _cat(thrd(name), _init)(size_t stack) {\
+    thrd(name) res = (thrd(name)){\
         .join = _cat(thrd(name), _join)\
     };\
+    if(stack == 0) stack = THRD_DEF_STACK;\
+    res.stack = stack;\
+    pthread_attr_init(&res._attr);\
+    pthread_attr_setstacksize(&res._attr, stack);\
+    return res;\
 }\
 bool _cat(thrd(name), _create)(thrd(name)* th, type (*f)(_type_decl_comma(args)), thrd_args(name) arg){\
-    *th = (thrd(name)){};\
     if(!th->run) {\
         th->run = true;\
         th->arg = arg;\
         th->f = f;\
-        th->join = _cat(thrd(name), _join);\
-        pthread_create(&th->th, NULL, _cat(thrd(name), _bootstrap), th);\
+        pthread_create(&th->_th, &th->_attr, _cat(thrd(name), _bootstrap), th);\
         return true;\
     }\
     return false;\

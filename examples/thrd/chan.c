@@ -13,12 +13,12 @@ void* prod(float a) {
 
 int main() {
     ch = thrd_chan_init(float)();
+    thrd(prod_t) th = thrd_init(prod_t)(0);
 
-    thrd(prod_t) th;
     thrd_create(prod_t, th, prod, 3.14f);
-
     printf("recv: %f\n", thrd_chan_recv(ch));
 
+    thrd_join(th);
     thrd_chan_free(ch);
 
     return 0;

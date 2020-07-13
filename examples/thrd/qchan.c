@@ -17,7 +17,7 @@ void* foo() {
 int main() {
     ch = thrd_qchan_init(float)();
 
-    thrd(foo_t) th;
+    thrd(foo_t) th = thrd_init(foo_t)(0);
     thrd_create(foo_t, th, foo);
 
     sleep(2);
@@ -26,6 +26,8 @@ int main() {
     printf("recv: %f\n", thrd_qchan_recv(ch));
     printf("recv: %f\n", thrd_qchan_recv(ch));
 
+    thrd_join(th);
     thrd_qchan_free(ch);
+
     return 0;
 }

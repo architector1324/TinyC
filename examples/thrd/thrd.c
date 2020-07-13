@@ -9,9 +9,10 @@ float foo(float a) {
 }
 
 int main() {
-    thrd(foo_t) th;
+    thrd(foo_t) th = thrd_init(foo_t)(0);
+    
     thrd_create(foo_t, th, foo, 3.14f);
-
     printf("%f\n", thrd_join(th));
+
     return 0;
 }
