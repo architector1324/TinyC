@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "ref.h"
+#include "wrap.h"
 #include "vec.h"
 
 REFERENCE(float)

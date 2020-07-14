@@ -1,5 +1,5 @@
 #!/bin/bash
 
-cp ../../src/{vec.h,ref.h} ./
+cp ../../src/{vec.h,wrap.h} ./
 gcc -O2 -Wall main.c
-rm ./{vec.h,ref.h}
+rm ./{vec.h,wrap.h}
