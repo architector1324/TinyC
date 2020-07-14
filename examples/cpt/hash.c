@@ -3,7 +3,7 @@
 
 int main() {
     const uint8_t msg[] = "Hello, World!";
-    arr(uint8_t, 32) sha256 = cpt_sha256(slc_from(uint8_t)(msg, sizeof(msg) - 1));
+    arr(uint8_t, 32) sha256 = cpt_sha256(slc_from(uint8_t)(msg, 0, sizeof(msg) - 1));
 
     // print
     printf("msg=%s\n", msg);

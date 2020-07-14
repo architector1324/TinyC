@@ -7,7 +7,7 @@ int main() {
 
     // encrypt and decrypt msg
     const uint8_t msg[] = "Hello, World!";
-    vec_micro(uint8_t) encrypted = cpt_rsa_encrypt(slc_from(uint8_t)(msg, 13), &keys.t0);
+    vec_micro(uint8_t) encrypted = cpt_rsa_encrypt(slc_from(uint8_t)(msg, 0, 13), &keys.t0);
 
     printf("msg=%s\nencrypted=", msg);
     for(size_t i = 0; i < encrypted.size; i++) printf("%02x", encrypted.data[i]);

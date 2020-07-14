@@ -7,13 +7,13 @@ int main() {
 
     // sign msg and verify
     const uint8_t msg[] = "Hello, World!";
-    arr(uint8_t, 256) sign = cpt_sign(slc_from(uint8_t)(msg, 13), &keys.t1);
+    arr(uint8_t, 256) sign = cpt_sign(slc_from(uint8_t)(msg, 0, 13), &keys.t1);
 
     printf("msg=%s\nsign=", msg);
     for(size_t i = 0; i < 256; i++) printf("%02x", sign.data[i]);
     puts("");
 
-    printf("%s\n", cpt_sign_verify(slc_from(uint8_t)(msg, 13), &sign, &keys.t0) ? "true" : "false");
+    printf("%s\n", cpt_sign_verify(slc_from(uint8_t)(msg, 0, 13), &sign, &keys.t0) ? "true" : "false");
 
     return 0;
 }

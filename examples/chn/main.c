@@ -11,10 +11,10 @@ int main() {
 
     float a[] = {1.0f, 2.0f};
 
-    vec_micro(float) b = vec_micro_from(float)(slc_from(float)((float[]){3.0f, 4.0f}, 2));
+    vec_micro(float) b = vec_micro_from(float)(slc_from(float)((float[]){3.0f, 4.0f}, 0, 2));
     vec_push(b, 5.0f);
 
-    chn_chain(cn, slc_from(float)(a, 2));
+    chn_chain(cn, slc_from(float)(a, 0, 2));
     chn_chain(cn, to_slc(b));
 
     printf(
@@ -28,7 +28,7 @@ int main() {
     // mutable chain
     chn_mut(float) cn1 = chn_init_mut(float)();
 
-    chn_chain(cn1, slc_from_mut(float)(a, 2));
+    chn_chain(cn1, slc_from_mut(float)(a, 0, 2));
     chn_chain(cn1, to_slc_mut(b));
 
     chn_set(cn1, 3, -2.13f);

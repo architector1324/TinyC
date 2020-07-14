@@ -35,11 +35,11 @@ typedef struct _cat(_, slc_mut(type)) {\
     type* data;\
     size_t size;\
 } slc_mut(type);\
-slc(type) _cat(slc(type), _from)(const type* data, size_t size) {\
-    return (slc(type)){data, size};\
+slc(type) _cat(slc(type), _from)(const type* data, size_t from, size_t size) {\
+    return (slc(type)){data + from, size};\
 }\
-slc_mut(type) _cat(slc_mut(type), _from)(type* data, size_t size) {\
-    return (slc_mut(type)){data, size};\
+slc_mut(type) _cat(slc_mut(type), _from)(type* data, size_t from, size_t size) {\
+    return (slc_mut(type)){data + from, size};\
 }
 
 // vector
