@@ -51,6 +51,7 @@ slc_mut(type) _cat(slc_mut(type), _from)(type* data, size_t from, size_t size) {
 #define vec_push(v, e) v.push(&v, e)
 #define vec_pop(v) v.pop(&v)
 #define vec_cat(to, from) to.cat(&to, &from)
+#define vec_cat_from(to, from) to.cat_from(&to, from)
 #define vec_reserve(v, count) v.reserve(&v, count)
 #define vec_free(v) v.free(&v)
 
@@ -66,6 +67,7 @@ typedef struct _cat(_, vec(type)) {\
     type (*pop)(struct _cat(_, vec(type))*);\
     void (*reserve)(struct _cat(_, vec(type))*, size_t);\
     void (*cat)(struct _cat(_, vec(type))*, const struct _cat(_, vec(type))*);\
+    void (*cat_from)(struct _cat(_, vec(type))*, slc(type));\
     void (*free)(struct _cat(_, vec(type))*);\
 } vec(type);\
 slc(type) _cat(vec(type), _slice)(const vec(type)* v) {\
@@ -115,6 +117,9 @@ void _cat(vec(type), _reserve)(vec(type)* v, size_t count) {\
 void _cat(vec(type), _cat)(vec(type)* to, const vec(type)* from){\
     for(size_t i = 0; i < from->size; i++) to->push(to, from->at(from, i));\
 }\
+void _cat(vec(type), _cat_from)(vec(type)* to, slc(type) from){\
+    for(size_t i = 0; i < from.size; i++) to->push(to, from.data[i]);\
+}\
 void _cat(vec(type), _free)(vec(type)* v) {\
     v->size = 0;\
     v->cap = 0;\
@@ -126,6 +131,7 @@ void _cat(vec(type), _free)(vec(type)* v) {\
     v->push = NULL;\
     v->pop = NULL;\
     v->cat = NULL;\
+    v->cat_from = NULL;\
     v->reserve = NULL;\
     v->free = NULL;\
 }\
@@ -140,6 +146,7 @@ vec(type) _cat(vec(type), _init)() {\
         .push = _cat(vec(type), _push),\
         .pop = _cat(vec(type), _pop),\
         .cat = _cat(vec(type), _cat),\
+        .cat_from = _cat(vec(type), _cat_from),\
         .reserve = _cat(vec(type), _reserve),\
         .free = _cat(vec(type), _free)\
     };\
@@ -166,6 +173,7 @@ typedef struct _cat(__vec_micro_, type) {\
     void (*push)(struct _cat(_, vec_micro(type))*, type);\
     type (*pop)(struct _cat(_, vec_micro(type))*);\
     void (*cat)(struct _cat(_, vec_micro(type))*, const struct _cat(_, vec_micro(type))*);\
+    void (*cat_from)(struct _cat(_, vec_micro(type))*, slc(type));\
 } vec_micro(type);\
 slc(type) _cat(vec_micro(type), _slice)(const vec_micro(type)* v) {\
     return (slc(type)){\
@@ -203,6 +211,9 @@ type _cat(vec_micro(type), _pop)(vec_micro(type)* v) {\
 void _cat(vec_micro(type), _cat)(vec_micro(type)* to, const vec_micro(type)* from){\
     for(size_t i = 0; i < from->size; i++) to->push(to, from->at(from, i));\
 }\
+void _cat(vec_micro(type), _cat_from)(vec_micro(type)* to, slc(type) from){\
+    for(size_t i = 0; i < from.size; i++) to->push(to, from.data[i]);\
+}\
 vec_micro(type) _cat(vec_micro(type), _init)() {\
     return (vec_micro(type)) {\
         .size = 0,\
@@ -212,6 +223,7 @@ vec_micro(type) _cat(vec_micro(type), _init)() {\
         .push = _cat(vec_micro(type), _push),\
         .pop = _cat(vec_micro(type), _pop),\
         .cat = _cat(vec_micro(type), _cat),\
+        .cat_from = _cat(vec_micro(type), _cat_from)\
     };\
 }\
 vec_micro(type) _cat(vec_micro(type), _from)(slc(type) a) {\
@@ -236,6 +248,7 @@ typedef struct _cat(_, vec_big(type)) {\
     void (*push)(struct _cat(_, vec_big(type))*, type);\
     type (*pop)(struct _cat(_, vec_big(type))*);\
     void (*cat)(struct _cat(_, vec_big(type))*, const struct _cat(_, vec_big(type))*);\
+    void (*cat_from)(struct _cat(_, vec_big(type))*, slc(type));\
     void (*free)(struct _cat(_, vec_big(type))*);\
 } vec_big(type);\
 type _cat(vec_big(type), _at)(const vec_big(type)* v, size_t i) {\
@@ -290,6 +303,9 @@ type _cat(vec_big(type), _pop)(vec_big(type)* v) {\
 void _cat(vec_big(type), _cat)(vec_big(type)* to, const vec_big(type)* from){\
     for(size_t i = 0; i < from->size; i++) to->push(to, from->at(from, i));\
 }\
+void _cat(vec_big(type), _cat_from)(vec_big(type)* to, slc(type) from){\
+    for(size_t i = 0; i < from.size; i++) to->push(to, from.data[i]);\
+}\
 void _cat(vec_big(type), _free)(vec_big(type)* v){\
     v->size = 0;\
     fclose(v->_data);\
@@ -298,6 +314,7 @@ void _cat(vec_big(type), _free)(vec_big(type)* v){\
     v->push = NULL;\
     v->pop = NULL;\
     v->cat = NULL;\
+    v->cat_from = NULL;\
     v->free = NULL;\
 }\
 vec_big(type) _cat(vec_big(type), _init)(const char* name) {\
@@ -318,6 +335,7 @@ vec_big(type) _cat(vec_big(type), _init)(const char* name) {\
         .push = _cat(vec_big(type), _push),\
         .pop = _cat(vec_big(type), _pop),\
         .cat = _cat(vec_big(type), _cat),\
+        .cat_from = _cat(vec_big(type), _cat_from),\
         .free = _cat(vec_big(type), _free)\
     };\
 }\
