@@ -30,5 +30,14 @@ int main() {
     printf("%s\n", str_cmp(str_from("Hello!"), str_from("Hello!")) ? "true" : "false");
     printf("%s\n", str_cmp(str_from("Hello!"), str_from("Hello!1")) ? "true" : "false");
 
+    // regular expression match
+    s = str_from("`Hello, world!`");
+    vec_micro(str) m = str_re_match("^`([^`]+)`|(\\w+)", 2, to_slc(s));
+    puts(m.data[1].data);
+
+    s = str_from("text");
+    m = str_re_match("^`([^`]+)`|(\\w+)", 2, to_slc(s));
+    puts(m.data[1].data);
+
     return 0;
 }
