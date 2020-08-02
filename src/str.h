@@ -12,6 +12,7 @@ SLICE(char)
 MICRO_VECTOR_CUSTOM(char, STR_MAX_LEN)
 
 #define str_init vec_micro_init(char)
+#define slc_from_str(s) slc_from(char)(s, 0, sizeof(s))
 
 typedef vec_micro(char) str;
 
